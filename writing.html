@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 50px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        .carousel {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        img {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        button {
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 10px;
+            font-family: inherit;
+            font-weight: inherit;
+        }
+
+        h2 {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: 350;
+        }
+
+        .article {
+            margin-top: 30px;
+            text-align: left;
+            white-space: pre-line;
+            line-height: 1.5;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="carousel">
+            <button onclick="previousImage()">&#60;</button>
+            <img id="mainImage" src="hair dresser.jpeg" onclick="imageClicked()">
+            <button onclick="nextImage()">&#62;</button>
+        </div>
+        <h2 id="imageTitle">AI Killed Languages - That's Why I'm Either Learning Japanese or Farsi Next (Probably Farsi)</h2>
+        <div id="articleText" class="article"></div>
+    </div>
+
+    <script>
+        const articles = [
+            { 
+                src: "hair dresser.jpeg", 
+                title: "AI Killed Languages - That's Why I'm Either Learning Japanese or Farsi Next (Probably Farsi)",
+                textFile: "ai-languages.txt"
+            },
+            { 
+                src: "huck finn and monkey.png", 
+                title: "Cultural Implications of Religious Symbolism on Chinese and American Innovation as Embodied by Sun Wu Kong Contrasted With Huckleberry Finn",
+                textFile: "huck-finn.txt"
+            }
+        ];
+
+        let currentImage = 0;
+
+        async function updateImage() {
+            document.getElementById('mainImage').src = articles[currentImage].src;
+            document.getElementById('imageTitle').textContent = articles[currentImage].title;
+            
+            try {
+                const response = await fetch(articles[currentImage].textFile);
+                const text = await response.text();
+                document.getElementById('articleText').textContent = text;
+            } catch (error) {
+                console.error('Error loading article:', error);
+                document.getElementById('articleText').textContent = 'Error loading article';
+            }
+        }
+
+        function previousImage() {
+            currentImage = currentImage === 0 ? articles.length - 1 : currentImage - 1;
+            updateImage();
+        }
+
+        function nextImage() {
+            currentImage = currentImage === articles.length - 1 ? 0 : currentImage + 1;
+            updateImage();
+        }
+
+        function imageClicked() {
+            console.log('Image clicked!');
+        }
+
+        updateImage();
+    </script>
+</body>
+</html>

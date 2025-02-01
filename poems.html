@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Changed from center to flex-start */
+            padding-top: 50px; /* Added padding to the top */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px; /* Added padding to bottom for balance */
+        }
+
+        .carousel {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        img {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        button {
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 10px;
+            font-family: inherit;
+            font-weight: inherit;
+        }
+
+        h2 {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: 350;
+        }
+
+        .poem {
+            margin-top: 30px;
+            text-align: center;
+            white-space: pre-line;
+            line-height: 1.5;
+        }
+
+        .signature {
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .stanza {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="carousel">
+            <button onclick="previousImage()">&#60;</button>
+            <img id="mainImage" src="gravity and space.jpg" onclick="imageClicked()">
+            <button onclick="nextImage()">&#62;</button>
+        </div>
+        <h2 id="imageTitle">The Best Way to Spend 4 Years</h2>
+        <div id="poemText" class="poem"></div>
+    </div>
+
+    <script>
+        const images = [
+            { 
+                src: "gravity and space.jpg", 
+                title: "The Best Way to Spend 4 Years",
+                poem: `Writhing through
+A winding mind
+This stubborn snake
+Has yet to find
+
+The pieces to
+Unlock his puzzle
+Quite the challenge
+For a measly muggle
+
+But even though
+This muggle mimes
+He soon learns that gravity
+Bends space and time.
+
+What better way
+To spend four years
+Than performing integrals
+With your peers
+
+Or arguing about
+Zhuangzi's dao
+Sitting peacefully
+By professor hao.
+
+Of all the flings
+I could've flung,
+How could I have
+chosen a better one?
+
+AHA
+1/15/25`
+            },
+            { 
+                src: "time painting.jpg", 
+                title: "Keeping Order",
+                poem: `Why pick up
+your crumbs
+when there are ants
+who'd love to help
+
+why pull up your bed
+when you're
+sleeping in it
+that same night.
+
+Why pattern
+your socks
+when your toes
+will soon be free
+
+Why plow
+the snow
+when winter
+is soon to slow.
+
+Why play
+when we all know
+that one day
+It will be time to go
+
+Why pry
+and force the day
+when things will surely
+turnout another way.
+
+Why worry
+of tomorrow
+when the sun
+is still not low,
+
+Why worry
+for tomorrow
+when a new sun
+is yet to crow.
+
+A.H.A 9-13-24`
+            }
+        ];
+
+        let currentImage = 0;
+
+        function updateImage() {
+            document.getElementById('mainImage').src = images[currentImage].src;
+            document.getElementById('imageTitle').textContent = images[currentImage].title;
+            document.getElementById('poemText').textContent = images[currentImage].poem;
+        }
+
+        function previousImage() {
+            currentImage = currentImage === 0 ? images.length - 1 : currentImage - 1;
+            updateImage();
+        }
+
+        function nextImage() {
+            currentImage = currentImage === images.length - 1 ? 0 : currentImage + 1;
+            updateImage();
+        }
+
+        function imageClicked() {
+            console.log('Image clicked!');
+        }
+
+        updateImage();
+    </script>
+</body>
+</html>

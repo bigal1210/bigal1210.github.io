@@ -3,25 +3,41 @@
 <head>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
     <style>
+        /* Your existing styles remain unchanged */
         * {
             font-family: 'IBM Plex Mono', monospace;
             font-weight: 350;
         }
 
+        .home-nav {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                width: 100px;
+                height: 100px;
+                cursor: pointer;
+            }
+
+        .home-nav img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
         body {
             margin: 0;
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Changed from center to flex-start */
-            padding-top: 50px; /* Added padding to the top */
+            align-items: flex-start;
+            padding-top: 50px;
         }
 
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 50px; /* Added padding to bottom for balance */
+            padding-bottom: 50px;
         }
 
         .carousel {
@@ -72,6 +88,9 @@
     </style>
 </head>
 <body>
+    <a href="Main.html" class="home-nav">
+        <img src="Me behind door spectroscopy.png" alt="Home">
+    </a>
     <div class="container">
         <div class="carousel">
             <button onclick="previousImage()">&#60;</button>
@@ -85,6 +104,7 @@
     <script>
         const images = [
             { 
+                id: 'four-years',
                 src: "gravity and space.jpg", 
                 title: "The Best Way to Spend 4 Years",
                 poem: `Writhing through
@@ -121,6 +141,7 @@ AHA
 1/15/25`
             },
             { 
+                id: 'keeping-order',
                 src: "time painting.jpg", 
                 title: "Keeping Order",
                 poem: `Why pick up
@@ -169,10 +190,26 @@ A.H.A 9-13-24`
 
         let currentImage = 0;
 
-        function updateImage() {
+        // Function to find poem by ID
+        function getImageIndexById(id) {
+            return images.findIndex(image => image.id === id);
+        }
+
+        // Function to update URL when poem changes
+        function updateURL(poemId) {
+            const newURL = `${window.location.pathname}?poem=${poemId}`;
+            window.history.pushState({ poemId }, '', newURL);
+        }
+
+        // Function to update display with current poem
+        function updateImage(index) {
+            currentImage = index !== undefined ? index : currentImage;
             document.getElementById('mainImage').src = images[currentImage].src;
             document.getElementById('imageTitle').textContent = images[currentImage].title;
             document.getElementById('poemText').textContent = images[currentImage].poem;
+            
+            // Update URL with current poem ID
+            updateURL(images[currentImage].id);
         }
 
         function previousImage() {
@@ -189,7 +226,32 @@ A.H.A 9-13-24`
             console.log('Image clicked!');
         }
 
-        updateImage();
+        // Initialize based on URL parameters
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const poemId = urlParams.get('poem');
+            
+            if (poemId) {
+                const index = getImageIndexById(poemId);
+                if (index !== -1) {
+                    updateImage(index);
+                    return;
+                }
+            }
+            
+            // If no valid poem ID in URL, start with first poem
+            updateImage(0);
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.poemId) {
+                const index = getImageIndexById(event.state.poemId);
+                if (index !== -1) {
+                    updateImage(index);
+                }
+            }
+        });
     </script>
 </body>
 </html>

@@ -8,6 +8,21 @@
             font-weight: 350;
         }
 
+        .home-nav {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                width: 100px;
+                height: 100px;
+                cursor: pointer;
+            }
+
+        .home-nav img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
@@ -65,6 +80,9 @@
     </style>
 </head>
 <body>
+    <a href="Main.html" class="home-nav">
+        <img src="Me behind door spectroscopy.png" alt="Home">
+    </a>
     <div class="container">
         <div class="carousel">
             <button onclick="previousImage()">&#60;</button>
@@ -78,22 +96,52 @@
     <script>
         const articles = [
             { 
+                id: 'ai-killed-languages',
                 src: "hair dresser.jpeg", 
                 title: "AI Killed Languages - That's Why I'm Either Learning Japanese or Farsi Next (Probably Farsi)",
                 textFile: "ai-languages.txt"
             },
             { 
+                id: 'culture-implications',
                 src: "huck finn and monkey.png", 
                 title: "Cultural Implications of Religious Symbolism on Chinese and American Innovation as Embodied by Sun Wu Kong Contrasted With Huckleberry Finn",
                 textFile: "huck-finn.txt"
+            },
+            {
+                id: 'huxleys-prophecy',
+                src: "Huxley.jpg",
+                title: "Huxley's Prophecy, The Inevitable Future?",
+                textFile: "Huxley.txt"
+            },
+            {
+                id: 'joint-hypermobility-anxiety',
+                src: "tyler.jpg",
+                title: "Joint Hypermobility, Anxiety, and the Gut Brain Axis",
+                textFile: "HypermobilityAndAnxiety.txt"
             }
         ];
 
         let currentImage = 0;
 
-        async function updateImage() {
+        // Function to find article by ID
+        function getArticleIndexById(id) {
+            return articles.findIndex(article => article.id === id);
+        }
+
+        // Function to update URL when article changes
+        function updateURL(articleId) {
+            const newURL = `${window.location.pathname}?article=${articleId}`;
+            window.history.pushState({ articleId }, '', newURL);
+        }
+
+        // Function to update display with current article
+        async function updateImage(index) {
+            currentImage = index !== undefined ? index : currentImage;
             document.getElementById('mainImage').src = articles[currentImage].src;
             document.getElementById('imageTitle').textContent = articles[currentImage].title;
+            
+            // Update URL with current article ID
+            updateURL(articles[currentImage].id);
             
             try {
                 const response = await fetch(articles[currentImage].textFile);
@@ -119,7 +167,32 @@
             console.log('Image clicked!');
         }
 
-        updateImage();
+        // Initialize based on URL parameters
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('article');
+            
+            if (articleId) {
+                const index = getArticleIndexById(articleId);
+                if (index !== -1) {
+                    updateImage(index);
+                    return;
+                }
+            }
+            
+            // If no valid article ID in URL, start with first article
+            updateImage(0);
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.articleId) {
+                const index = getArticleIndexById(event.state.articleId);
+                if (index !== -1) {
+                    updateImage(index);
+                }
+            }
+        });
     </script>
 </body>
 </html>

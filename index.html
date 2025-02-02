@@ -4,12 +4,32 @@
         <title>Alexander Atalla</title>
         <style>
             body {
-                height: 100vh;
+                height: 110vh;
                 margin: 0;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                background: white;
+                font-family: 'IBM Plex Mono', monospace;
+                font-weight: 350;
+            }
+
+            .content-container {
+                position: relative;
+                transform: rotate(3.2deg);
+                width: fit-content;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                align-items: center
+
+            }
+
+            .text-container {
+                
+                max-width: 425px;
+                text-align: center;
+                
+             
             }
 
             img {
@@ -17,9 +37,10 @@
                 height: 600px;
                 width: auto;
                 transition: transform 0.7s ease;
+                margin-left: 25px;
             }
 
-            img:hover {
+            .content-container:hover img {
                 transform: scale(1.1);
             }
 
@@ -31,9 +52,17 @@
         </style>
     </head>
     <body>
-        <a href="https://bigal1210.github.io/Main.html">
-            <img src="Me behind door spectroscopy.png">
-
-        </a>
+        <div class="content-container">
+            <div class="text-container">
+                This is the first thing I coded myself from scratch. 
+                Bare with me as I continue to make updates and learn new languages 
+                so I can make the site more robust and fullfill my artistic vision for my page. 
+                It's intersting how technichal ability both enables and is a limiting factor for
+                fullfilling one's imagination.
+            </div>
+            <a href="Main.html">
+                <img src="Me behind door spectroscopy.png">
+            </a>
+        </div>
     </body>
 </html>

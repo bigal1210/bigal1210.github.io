@@ -17,24 +17,32 @@
 
             a {
                 text-decoration: none;
-                color: black; /* This will keep the text black instead of the default blue */
+                color: black; /* keeps  text black instead of  default blue */
             }
-
 
             .button-container {
                 margin-top: 75px;
                 display: flex;
-                gap: 200px;
+                gap: 150px;
+                justify-content: center;
             }
 
             button {
+                width: 150px;
                 padding: 8px 16px;
                 border: 1px solid black;
                 background: white;
                 font-family: inherit;
                 font-weight: inherit;
-                cursor: help;
+                cursor: pointer;
                 transition: 0.2s;
+                text-align: center;
+            }
+
+            .bottom-container {
+                margin-top: 30px;
+                display: flex;
+                justify-content: center;
             }
 
             button:hover {
@@ -45,7 +53,7 @@
     </head>
 
     <body>
-        <a href = index.html>
+        <a href="index.html">
             Alexander Atalla...
         </a>
         
@@ -57,6 +65,15 @@
                 <button>Poems</button>
             </a>
         </div>
+        <div class="button-container">
+            <a href="shorterthoughts.html">
+                <button>Shorter Thoughts</button>
+            </a>
+            <a href="https://drive.google.com/drive/folders/1nT3fBhC4GYCVVijHH--JwRjEAsU2SJSO?usp=sharing">
+                <button>App Portfolio</button>
+            </a>
+        </div>
+       
     </body>
     
 </html>

@@ -1,30 +1,503 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Shorter Thoughts</title>
-        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
-        <style>
-            body {
-                height: 100vh;
-                margin: 0;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                font-family: 'IBM Plex Mono', monospace;
-                font-weight: 350;
-            }
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+    <title>Shorter Thoughts</title>
+    <style>
+        .home-nav {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            z-index: 1000;
+        }
 
-            a {
-                text-decoration: none;
-                color: black; /* keeps  text black instead of  default blue */
-            }
+        .home-nav img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-            </style>
-    </head>
-    <body>
-        <a href = index.html></a>
-            Nothing Here Yet
-        </a>
-    </body>
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+            background: white;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            color: black;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .title {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: black;
+            font-size: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 300;
+            z-index: 100;
+            letter-spacing: 0.5px;
+        }
+
+        .home-link {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: black;
+            text-decoration: none;
+            font-size: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .home-link:hover {
+            opacity: 0.7;
+        }
+
+        .thought-bubble {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            user-select: none;
+        }
+
+        .thought-bubble:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            border-color: #333;
+            cursor: grab;
+        }
+
+        .thought-bubble:active {
+            cursor: grabbing;
+        }
+
+        .thought-bubble.focused {
+            position: fixed !important;
+            top: 2.5% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 500px !important;
+            height: auto !important;
+            min-height: 300px !important;
+            max-height: 90vh !important;
+            border-radius: 8px !important;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 50px;
+            font-size: 16px;
+            line-height: 1.7;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: default;
+            overflow-y: auto;
+        }
+
+        .thought-bubble.minimized {
+            width: 70px !important;
+            height: 70px !important;
+            padding: 8px !important;
+            font-size: 9px !important;
+            opacity: 0.4;
+            transition: all 0.4s ease;
+        }
+
+        .thought-text {
+            font-size: 12px;
+            color: black;
+            line-height: 1.3;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+            word-wrap: break-word;
+        }
+
+        .focused .thought-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #333;
+            text-align: left;
+        }
+
+        .minimized .thought-text {
+            font-size: 9px;
+            line-height: 1.2;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: black;
+            transition: all 0.2s ease;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 350;
+        }
+
+        .focused .close-btn {
+            display: flex;
+        }
+
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+            color: black;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .thought-bubble {
+                width: 120px;
+                height: 120px;
+                padding: 16px;
+            }
+            
+            .thought-bubble.focused {
+                padding: 40px 30px;
+                max-width: 90%;
+            }
+            
+            .focused .thought-text {
+                font-size: 20px;
+                line-height: 1.5;
+            }
+            
+            .title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="Main.html" class="home-nav">
+        <img src="Me behind door spectroscopy.png" alt="Home">
+    </a>
+    <div class="container">
+        <h1 class="title">Shorter Thoughts</h1>
+        <div class="overlay" id="overlay"></div>
+        
+        <div class="thought-bubble" data-thought="6" data-thought-title="Brain Gyms and AI" data-thought-content="Fitness influencers have been a thing for over 100 years. Nothing has changed, people only get fatter. Why would this time be any different.
+
+Meditation has been around for thousands of years. Nothing has changed, people are sadder and more reliant on drugs now than ever. Why would this time be any different?
+
+Libraries have been around for thousands of years, the internet for decades, and YouTube for more than 10. Nothing has changed, people are only getting dumber, why should this time be any different?
+
+First, we outsourced metabolic demands of movement via guns, tractors, cars, factories, elevators, etc.
+
+Humans are inherently lazy. An ATP molecule saved is ATP molecule earned.
+
+We soon discovered that in fact exercise is crucial for health and life, now we go to gyms where we workout for no explicit purpose.
+
+We’re in the process of entirely outsourcing metabolic demands of thinking, first via calculators, now via super duper computers, and soon via the functional equivalent of brain implants.
+
+Will we soon realize that metabolic demands of thinking are crucial for health and longevity.
+
+Will centers for complex integrals for no explicit purpose soon be crucial aspects of biohackers health and longevity routines?
+
+That’s why I’m studying physics. LOL 😹.">
+            <div class="thought-text">Brain Gyms and AI</div>
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        let focusedBubble = null;
+        let bubbles = [];
+        let animationId = null;
+
+        class Bubble {
+            constructor(element, index) {
+                this.element = element;
+                this.index = index;
+                this.x = Math.random() * (window.innerWidth - 200) + 100;
+                this.y = Math.random() * (window.innerHeight - 200) + 100;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.isPaused = false;
+                this.isDragging = false;
+                this.hasDragged = false;
+                this.dragStartTime = 0;
+                this.dragStartPos = { x: 0, y: 0 };
+                this.dragOffset = { x: 0, y: 0 };
+                this.radius = 75;
+                
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                
+                this.element.addEventListener('mouseenter', () => {
+                    if (!focusedBubble) {
+                        this.isPaused = true;
+                    }
+                });
+                
+                this.element.addEventListener('mouseleave', () => {
+                    if (!this.isDragging) {
+                        this.isPaused = false;
+                    }
+                });
+                
+                this.element.addEventListener('mousedown', (e) => {
+                    if (!focusedBubble) {
+                        this.startDrag(e);
+                    }
+                });
+                
+                this.element.addEventListener('click', (e) => {
+                    if (!focusedBubble && !this.hasDragged) {
+                        e.stopPropagation();
+                        focusBubble(this.element, this.index);
+                    }
+                });
+            }
+            
+            startDrag(e) {
+                this.isDragging = true;
+                this.hasDragged = false;
+                this.isPaused = true;
+                this.dragStartTime = Date.now();
+                this.dragStartPos = { x: e.clientX, y: e.clientY };
+                this.element.style.cursor = 'grabbing';
+                
+                const rect = this.element.getBoundingClientRect();
+                this.dragOffset.x = e.clientX - rect.left - rect.width / 2;
+                this.dragOffset.y = e.clientY - rect.top - rect.height / 2;
+                
+                document.addEventListener('mousemove', this.onDrag);
+                document.addEventListener('mouseup', this.stopDrag);
+                
+                // Prevent text selection while dragging
+                e.preventDefault();
+            }
+            
+            onDrag = (e) => {
+                if (!this.isDragging) return;
+                
+                const dragDistance = Math.sqrt(
+                    Math.pow(e.clientX - this.dragStartPos.x, 2) +
+                    Math.pow(e.clientY - this.dragStartPos.y, 2)
+                );
+                
+                // Consider it a drag if moved more than 5 pixels
+                if (dragDistance > 5) {
+                    this.hasDragged = true;
+                }
+                
+                this.x = e.clientX - this.dragOffset.x - 70;
+                this.y = e.clientY - this.dragOffset.y - 70;
+                
+                // Smooth boundary constraints
+                this.x = Math.max(75, Math.min(window.innerWidth - 75, this.x));
+                this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+                
+                // Use transform for smoother movement during drag
+                this.element.style.transform = `translate(${this.x - parseFloat(this.element.style.left)}px, ${this.y - parseFloat(this.element.style.top)}px)`;
+            }
+            
+            stopDrag = () => {
+                if (!this.isDragging) return;
+                
+                this.isDragging = false;
+                this.isPaused = false;
+                this.element.style.cursor = 'pointer';
+                
+                // Apply final position and clear transform smoothly
+                requestAnimationFrame(() => {
+                    this.element.style.left = this.x + 'px';
+                    this.element.style.top = this.y + 'px';
+                    this.element.style.transform = '';
+                });
+                
+                document.removeEventListener('mousemove', this.onDrag);
+                document.removeEventListener('mouseup', this.stopDrag);
+                
+                // Reset drag flag after a short delay to prevent immediate click
+                setTimeout(() => {
+                    this.hasDragged = false;
+                }, 150);
+                
+                // Give the bubble a small random velocity after dragging
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+            }
+            
+            update() {
+                if (this.isPaused || focusedBubble || this.isDragging) return;
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Bounce off edges with padding
+                if (this.x <= this.radius || this.x >= window.innerWidth - this.radius) {
+                    this.vx *= -1;
+                    this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
+                }
+                if (this.y <= 75 || this.y >= window.innerHeight - 75) {
+                    this.vy *= -1;
+                    this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+                }
+                
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+            }
+        }
+
+        function animate() {
+            bubbles.forEach(bubble => bubble.update());
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function initializeBubbles() {
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+            bubbles = [];
+            
+            bubbleElements.forEach((element, index) => {
+                bubbles.push(new Bubble(element, index));
+            });
+            
+            animate();
+        }
+
+        function focusBubble(bubble, index) {
+            if (focusedBubble) return;
+            
+            focusedBubble = bubble;
+            const overlay = document.getElementById('overlay');
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+            // If the bubble has data-thought-content, use it as the .thought-text
+            const content = bubble.getAttribute('data-thought-content');
+            if (content !== null) {
+                const thoughtTextDiv = bubble.querySelector('.thought-text');
+                if (thoughtTextDiv) {
+                    // Replace newlines with <br> for HTML display
+                    thoughtTextDiv.innerHTML = content.replace(/\n/g, "<br>");
+                }
+            }
+            
+            overlay.classList.add('active');
+            bubble.classList.add('focused');
+            
+            bubbleElements.forEach((otherBubble, otherIndex) => {
+                if (otherBubble !== bubble) {
+                    otherBubble.classList.add('minimized');
+                    repositionToCorner(otherBubble, otherIndex);
+                }
+            });
+        }
+
+        function repositionToCorner(bubble, index) {
+            const positions = [
+                { x: 50, y: 100 },
+                { x: window.innerWidth - 120, y: 100 },
+                { x: 50, y: window.innerHeight - 120 },
+                { x: window.innerWidth - 120, y: window.innerHeight - 120 }
+            ];
+            
+            const pos = positions[index % positions.length];
+            bubble.style.left = pos.x + 'px';
+            bubble.style.top = pos.y + 'px';
+        }
+
+        function closeFocus() {
+            if (!focusedBubble) return;
+            
+            const overlay = document.getElementById('overlay');
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+            
+            // Restore original bubble title if it had data-thought-content
+            const contentAttr = focusedBubble.getAttribute('data-thought-content');
+            if (contentAttr !== null) {
+                const originalText = focusedBubble.dataset.thoughtTitle || '';
+                const thoughtTextDiv = focusedBubble.querySelector('.thought-text');
+                if (thoughtTextDiv) {
+                    thoughtTextDiv.textContent = originalText;
+                }
+            }
+            
+            overlay.classList.remove('active');
+            focusedBubble.classList.remove('focused');
+            
+            bubbleElements.forEach((bubble) => {
+                bubble.classList.remove('minimized');
+            });
+            
+            focusedBubble = null;
+        }
+
+        // Event listeners
+        document.getElementById('overlay').addEventListener('click', closeFocus);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeFocus();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!focusedBubble) {
+                bubbles.forEach(bubble => {
+                    bubble.x = Math.min(bubble.x, window.innerWidth - bubble.radius);
+                    bubble.y = Math.min(bubble.y, window.innerHeight - bubble.radius);
+                });
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeBubbles);
+    </script>
+</body>
 </html>

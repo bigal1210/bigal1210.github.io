@@ -105,7 +105,7 @@
 
         .thought-bubble.focused {
             position: fixed !important;
-            top: 2.5% !important;
+            top: 5vh !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             width: 500px !important;
@@ -116,13 +116,14 @@
             z-index: 1000;
             background: white;
             border: 1px solid #e0e0e0;
-            padding: 50px;
+            padding: 40px;
             font-size: 16px;
             line-height: 1.7;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: default;
             overflow-y: auto;
+            display: block;
         }
 
         .thought-bubble.minimized {
@@ -141,6 +142,8 @@
             font-family: 'IBM Plex Mono', monospace;
             font-weight: 350;
             word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .focused .thought-text {
@@ -148,6 +151,11 @@
             line-height: 1.7;
             color: #333;
             text-align: left;
+            width: 100%;
+            height: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .minimized .thought-text {
@@ -209,12 +217,14 @@
             }
             
             .thought-bubble.focused {
-                padding: 40px 30px;
+                padding: 30px 20px;
                 max-width: 90%;
+                width: 90%;
+                max-height: 85vh;
             }
             
             .focused .thought-text {
-                font-size: 20px;
+                font-size: 14px;
                 line-height: 1.5;
             }
             
@@ -244,13 +254,13 @@ Humans are inherently lazy. An ATP molecule saved is ATP molecule earned.
 
 We soon discovered that in fact exercise is crucial for health and life, now we go to gyms where we workout for no explicit purpose.
 
-We’re in the process of entirely outsourcing metabolic demands of thinking, first via calculators, now via super duper computers, and soon via the functional equivalent of brain implants.
+We're in the process of entirely outsourcing metabolic demands of thinking, first via calculators, now via super duper computers, and soon via the functional equivalent of brain implants.
 
 Will we soon realize that metabolic demands of thinking are crucial for health and longevity.
 
 Will centers for complex integrals for no explicit purpose soon be crucial aspects of biohackers health and longevity routines?
 
-That’s why I’m studying physics. LOL 😹.">
+That's why I'm studying physics. LOL 😹.">
             <div class="thought-text">Brain Gyms and AI</div>
             <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
         </div>
@@ -260,6 +270,9 @@ That’s why I’m studying physics. LOL 😹.">
         let focusedBubble = null;
         let bubbles = [];
         let animationId = null;
+        let isAnimating = false;
+        let lastTime = 0;
+        const ANIMATION_INTERVAL = 16; // ~60fps
 
         class Bubble {
             constructor(element, index) {
@@ -272,23 +285,29 @@ That’s why I’m studying physics. LOL 😹.">
                 this.isPaused = false;
                 this.isDragging = false;
                 this.hasDragged = false;
-                this.dragStartTime = 0;
-                this.dragStartPos = { x: 0, y: 0 };
                 this.dragOffset = { x: 0, y: 0 };
                 this.radius = 75;
+                this.isMoving = true;
                 
                 this.element.style.left = this.x + 'px';
                 this.element.style.top = this.y + 'px';
                 
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
                 this.element.addEventListener('mouseenter', () => {
                     if (!focusedBubble) {
                         this.isPaused = true;
+                        this.checkAnimationNeeded();
                     }
                 });
                 
                 this.element.addEventListener('mouseleave', () => {
                     if (!this.isDragging) {
                         this.isPaused = false;
+                        this.isMoving = true;
+                        this.startAnimation();
                     }
                 });
                 
@@ -310,8 +329,6 @@ That’s why I’m studying physics. LOL 😹.">
                 this.isDragging = true;
                 this.hasDragged = false;
                 this.isPaused = true;
-                this.dragStartTime = Date.now();
-                this.dragStartPos = { x: e.clientX, y: e.clientY };
                 this.element.style.cursor = 'grabbing';
                 
                 const rect = this.element.getBoundingClientRect();
@@ -321,31 +338,20 @@ That’s why I’m studying physics. LOL 😹.">
                 document.addEventListener('mousemove', this.onDrag);
                 document.addEventListener('mouseup', this.stopDrag);
                 
-                // Prevent text selection while dragging
                 e.preventDefault();
             }
             
             onDrag = (e) => {
                 if (!this.isDragging) return;
                 
-                const dragDistance = Math.sqrt(
-                    Math.pow(e.clientX - this.dragStartPos.x, 2) +
-                    Math.pow(e.clientY - this.dragStartPos.y, 2)
-                );
-                
-                // Consider it a drag if moved more than 5 pixels
-                if (dragDistance > 5) {
-                    this.hasDragged = true;
-                }
+                this.hasDragged = true;
                 
                 this.x = e.clientX - this.dragOffset.x - 70;
                 this.y = e.clientY - this.dragOffset.y - 70;
                 
-                // Smooth boundary constraints
                 this.x = Math.max(75, Math.min(window.innerWidth - 75, this.x));
                 this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
                 
-                // Use transform for smoother movement during drag
                 this.element.style.transform = `translate(${this.x - parseFloat(this.element.style.left)}px, ${this.y - parseFloat(this.element.style.top)}px)`;
             }
             
@@ -356,7 +362,6 @@ That’s why I’m studying physics. LOL 😹.">
                 this.isPaused = false;
                 this.element.style.cursor = 'pointer';
                 
-                // Apply final position and clear transform smoothly
                 requestAnimationFrame(() => {
                     this.element.style.left = this.x + 'px';
                     this.element.style.top = this.y + 'px';
@@ -366,40 +371,103 @@ That’s why I’m studying physics. LOL 😹.">
                 document.removeEventListener('mousemove', this.onDrag);
                 document.removeEventListener('mouseup', this.stopDrag);
                 
-                // Reset drag flag after a short delay to prevent immediate click
                 setTimeout(() => {
                     this.hasDragged = false;
                 }, 150);
                 
-                // Give the bubble a small random velocity after dragging
                 this.vx = (Math.random() - 0.5) * 0.8;
                 this.vy = (Math.random() - 0.5) * 0.8;
+                this.isMoving = true;
+                this.startAnimation();
             }
             
             update() {
-                if (this.isPaused || focusedBubble || this.isDragging) return;
-                
-                this.x += this.vx;
-                this.y += this.vy;
-                
-                // Bounce off edges with padding
-                if (this.x <= this.radius || this.x >= window.innerWidth - this.radius) {
-                    this.vx *= -1;
-                    this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
-                }
-                if (this.y <= 75 || this.y >= window.innerHeight - 75) {
-                    this.vy *= -1;
-                    this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+                if (this.isPaused || focusedBubble || this.isDragging) {
+                    this.isMoving = false;
+                    return false;
                 }
                 
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
+                let moved = false;
+                
+                // Only update if velocity is significant
+                if (Math.abs(this.vx) > 0.01 || Math.abs(this.vy) > 0.01) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    moved = true;
+                    
+                    // Bounce off edges
+                    if (this.x <= this.radius || this.x >= window.innerWidth - this.radius) {
+                        this.vx *= -0.95; // Add slight damping
+                        this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
+                    }
+                    if (this.y <= 75 || this.y >= window.innerHeight - 75) {
+                        this.vy *= -0.95; // Add slight damping
+                        this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+                    }
+                    
+                    // Apply friction
+                    this.vx *= 0.999;
+                    this.vy *= 0.999;
+                    
+                    this.element.style.left = this.x + 'px';
+                    this.element.style.top = this.y + 'px';
+                }
+                
+                if (!moved) {
+                    this.isMoving = false;
+                }
+                
+                return moved;
+            }
+            
+            checkAnimationNeeded() {
+                const needsAnimation = bubbles.some(bubble => 
+                    bubble.isMoving && !bubble.isPaused && !bubble.isDragging
+                );
+                
+                if (!needsAnimation && isAnimating) {
+                    this.stopAnimation();
+                }
+            }
+            
+            startAnimation() {
+                if (!isAnimating) {
+                    isAnimating = true;
+                    animate();
+                }
+            }
+            
+            stopAnimation() {
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                    isAnimating = false;
+                }
             }
         }
 
-        function animate() {
-            bubbles.forEach(bubble => bubble.update());
-            animationId = requestAnimationFrame(animate);
+        function animate(currentTime = 0) {
+            if (currentTime - lastTime >= ANIMATION_INTERVAL) {
+                let anyMoving = false;
+                
+                bubbles.forEach(bubble => {
+                    if (bubble.update()) {
+                        anyMoving = true;
+                    }
+                });
+                
+                // Stop animation if nothing is moving
+                if (!anyMoving && !focusedBubble) {
+                    isAnimating = false;
+                    return;
+                }
+                
+                lastTime = currentTime;
+            }
+            
+            if (isAnimating) {
+                animationId = requestAnimationFrame(animate);
+            }
         }
 
         function initializeBubbles() {
@@ -410,7 +478,11 @@ That’s why I’m studying physics. LOL 😹.">
                 bubbles.push(new Bubble(element, index));
             });
             
-            animate();
+            // Start animation only if bubbles are moving
+            if (bubbles.some(bubble => bubble.isMoving)) {
+                isAnimating = true;
+                animate();
+            }
         }
 
         function focusBubble(bubble, index) {
@@ -420,18 +492,17 @@ That’s why I’m studying physics. LOL 😹.">
             const overlay = document.getElementById('overlay');
             const bubbleElements = document.querySelectorAll('.thought-bubble');
 
-            // If the bubble has data-thought-content, use it as the .thought-text
             const content = bubble.getAttribute('data-thought-content');
             if (content !== null) {
                 const thoughtTextDiv = bubble.querySelector('.thought-text');
                 if (thoughtTextDiv) {
-                    // Replace newlines with <br> for HTML display
-                    thoughtTextDiv.innerHTML = content.replace(/\n/g, "<br>");
+                    thoughtTextDiv.textContent = content;
                 }
             }
             
             overlay.classList.add('active');
             bubble.classList.add('focused');
+            document.body.style.overflow = 'auto';
             
             bubbleElements.forEach((otherBubble, otherIndex) => {
                 if (otherBubble !== bubble) {
@@ -439,6 +510,20 @@ That’s why I’m studying physics. LOL 😹.">
                     repositionToCorner(otherBubble, otherIndex);
                 }
             });
+            
+            // Stop animation when focused
+            bubbles.forEach(bubble => {
+                bubble.isMoving = false;
+                bubble.isPaused = true;
+            });
+            
+            if (isAnimating) {
+                isAnimating = false;
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            }
         }
 
         function repositionToCorner(bubble, index) {
@@ -460,7 +545,6 @@ That’s why I’m studying physics. LOL 😹.">
             const overlay = document.getElementById('overlay');
             const bubbleElements = document.querySelectorAll('.thought-bubble');
             
-            // Restore original bubble title if it had data-thought-content
             const contentAttr = focusedBubble.getAttribute('data-thought-content');
             if (contentAttr !== null) {
                 const originalText = focusedBubble.dataset.thoughtTitle || '';
@@ -472,12 +556,24 @@ That’s why I’m studying physics. LOL 😹.">
             
             overlay.classList.remove('active');
             focusedBubble.classList.remove('focused');
+            document.body.style.overflow = 'hidden';
             
             bubbleElements.forEach((bubble) => {
                 bubble.classList.remove('minimized');
             });
             
             focusedBubble = null;
+            
+            // Resume animation
+            bubbles.forEach(bubble => {
+                bubble.isPaused = false;
+                bubble.isMoving = true;
+            });
+            
+            if (!isAnimating) {
+                isAnimating = true;
+                animate();
+            }
         }
 
         // Event listeners

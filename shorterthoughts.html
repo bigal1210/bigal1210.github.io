@@ -500,6 +500,16 @@ That's why I'm studying physics. LOL 😹.">
                 }
             }
             
+            // Update URL with bubble name
+            const bubbleTitle = bubble.getAttribute('data-thought-title') || `thought-${index}`;
+            const urlFriendlyTitle = bubbleTitle.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single
+                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+            
+            history.pushState({ bubbleIndex: index, bubbleTitle: bubbleTitle }, bubbleTitle, `#${urlFriendlyTitle}`);
+            
             overlay.classList.add('active');
             bubble.classList.add('focused');
             document.body.style.overflow = 'auto';
@@ -554,6 +564,9 @@ That's why I'm studying physics. LOL 😹.">
                 }
             }
             
+            // Clear URL hash
+            history.pushState('', document.title, window.location.pathname + window.location.search);
+            
             overlay.classList.remove('active');
             focusedBubble.classList.remove('focused');
             document.body.style.overflow = 'hidden';
@@ -592,8 +605,47 @@ That's why I'm studying physics. LOL 😹.">
             }
         });
 
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.bubbleIndex !== undefined) {
+                // Navigate to specific bubble
+                const bubbleElements = document.querySelectorAll('.thought-bubble');
+                const targetBubble = bubbleElements[event.state.bubbleIndex];
+                if (targetBubble && !focusedBubble) {
+                    focusBubble(targetBubble, event.state.bubbleIndex);
+                }
+            } else {
+                // Close any open bubble
+                closeFocus();
+            }
+        });
+
+        // Check for hash on page load to open specific bubble
+        function checkInitialHash() {
+            const hash = window.location.hash.slice(1); // Remove the #
+            if (hash) {
+                const bubbleElements = document.querySelectorAll('.thought-bubble');
+                bubbleElements.forEach((bubble, index) => {
+                    const bubbleTitle = bubble.getAttribute('data-thought-title') || `thought-${index}`;
+                    const urlFriendlyTitle = bubbleTitle.toLowerCase()
+                        .replace(/[^a-z0-9\s]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '');
+                    
+                    if (urlFriendlyTitle === hash) {
+                        // Small delay to ensure bubbles are initialized
+                        setTimeout(() => focusBubble(bubble, index), 100);
+                    }
+                });
+            }
+        }
+
         // Initialize when page loads
-        window.addEventListener('load', initializeBubbles);
+        window.addEventListener('load', () => {
+            initializeBubbles();
+            checkInitialHash();
+        });
     </script>
 </body>
 </html>

@@ -1,260 +1,451 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+
     <title>Shorter Thoughts</title>
+
     <style>
+
         .home-nav {
+
             position: fixed;
+
             top: 30px;
+
             left: 30px;
+
             width: 100px;
+
             height: 100px;
+
             cursor: pointer;
+
             z-index: 1000;
+
         }
 
         .home-nav img {
+
             width: 100%;
+
             height: 100%;
+
             object-fit: contain;
+
         }
+
         * {
+
             margin: 0;
+
             padding: 0;
+
             box-sizing: border-box;
+
         }
 
         body {
+
             font-family: 'IBM Plex Mono', monospace;
+
             font-weight: 350;
+
             background: white;
+
             min-height: 100vh;
+
             overflow: hidden;
+
             position: relative;
+
             color: black;
+
         }
 
         .container {
+
             width: 100vw;
+
             height: 100vh;
+
             position: relative;
+
             overflow: hidden;
+
         }
 
         .title {
+
             position: absolute;
+
             top: 30px;
+
             left: 50%;
+
             transform: translateX(-50%);
+
             color: black;
+
             font-size: 16px;
+
             font-family: 'IBM Plex Mono', monospace;
+
             font-weight: 300;
+
             z-index: 100;
+
             letter-spacing: 0.5px;
+
         }
 
         .home-link {
+
             position: absolute;
+
             top: 30px;
+
             left: 30px;
+
             color: black;
+
             text-decoration: none;
+
             font-size: 16px;
+
             font-family: 'IBM Plex Mono', monospace;
+
             font-weight: 350;
+
             z-index: 100;
+
             transition: opacity 0.3s ease;
+
         }
 
         .home-link:hover {
+
             opacity: 0.7;
+
         }
 
         .thought-bubble {
+
             position: absolute;
+
             width: 140px;
+
             height: 140px;
+
             border-radius: 50%;
+
             background: white;
+
             border: 1px solid black;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             text-align: center;
+
             padding: 20px;
+
             cursor: pointer;
+
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
             user-select: none;
+
         }
 
         .thought-bubble:hover {
+
             transform: scale(1.15);
+
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+
             border-color: #333;
+
             cursor: grab;
+
         }
 
         .thought-bubble:active {
+
             cursor: grabbing;
+
         }
 
         .thought-bubble.focused {
+
             position: fixed !important;
+
             top: 5vh !important;
+
             left: 50% !important;
+
             transform: translateX(-50%) !important;
+
             width: 500px !important;
+
             height: auto !important;
+
             min-height: 300px !important;
+
             max-height: 90vh !important;
+
             border-radius: 8px !important;
+
             z-index: 1000;
+
             background: white;
+
             border: 1px solid #e0e0e0;
+
             padding: 40px;
+
             font-size: 16px;
+
             line-height: 1.7;
+
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
             cursor: default;
+
             overflow-y: auto;
+
             display: block;
+
         }
 
         .thought-bubble.minimized {
+
             width: 70px !important;
+
             height: 70px !important;
+
             padding: 8px !important;
+
             font-size: 9px !important;
+
             opacity: 0.4;
+
             transition: all 0.4s ease;
+
         }
 
         .thought-text {
+
             font-size: 12px;
+
             color: black;
+
             line-height: 1.3;
+
             font-family: 'IBM Plex Mono', monospace;
+
             font-weight: 350;
+
             word-wrap: break-word;
+
             overflow-wrap: break-word;
+
             white-space: pre-wrap;
+
         }
 
         .focused .thought-text {
+
             font-size: 16px;
+
             line-height: 1.7;
+
             color: #333;
+
             text-align: left;
+
             width: 100%;
+
             height: auto;
+
             white-space: pre-wrap;
+
             word-wrap: break-word;
+
             overflow-wrap: break-word;
+
         }
 
         .minimized .thought-text {
+
             font-size: 9px;
+
             line-height: 1.2;
+
         }
 
         .close-btn {
+
             position: absolute;
+
             top: 15px;
+
             right: 15px;
+
             width: 24px;
+
             height: 24px;
+
             border-radius: 50%;
+
             background: rgba(0, 0, 0, 0.1);
+
             border: none;
+
             cursor: pointer;
+
             display: none;
+
             align-items: center;
+
             justify-content: center;
+
             font-size: 18px;
+
             color: black;
+
             transition: all 0.2s ease;
+
             font-family: 'IBM Plex Mono', monospace;
+
             font-weight: 350;
+
         }
 
         .focused .close-btn {
+
             display: flex;
+
         }
 
         .close-btn:hover {
+
             background: rgba(0, 0, 0, 0.2);
+
             color: black;
+
         }
 
         .overlay {
+
             position: fixed;
+
             top: 0;
+
             left: 0;
+
             width: 100%;
+
             height: 100%;
+
             background: rgba(0, 0, 0, 0.4);
+
             z-index: 999;
+
             display: none;
+
             backdrop-filter: blur(4px);
+
         }
 
         .overlay.active {
+
             display: block;
+
         }
 
         /* Responsive adjustments */
+
         @media (max-width: 768px) {
+
             .thought-bubble {
+
                 width: 120px;
+
                 height: 120px;
+
                 padding: 16px;
+
             }
-            
+
+           
+
             .thought-bubble.focused {
+
                 padding: 30px 20px;
+
                 max-width: 90%;
+
                 width: 90%;
+
                 max-height: 85vh;
+
             }
-            
+
+           
+
             .focused .thought-text {
+
                 font-size: 14px;
+
                 line-height: 1.5;
+
             }
-            
+
+           
+
             .title {
-                font-size: 16px;
-                left: 50%;
-                transform: translateX(-50%);
-                text-align: center;
-                width: 100%;
-                padding: 0 20px;
-                box-sizing: border-box;
+
+                font-size: 24px;
+
             }
-            
-            .home-nav {
-                top: 20px;
-                left: 20px;
-                width: 80px;
-                height: 80px;
-            }
+
         }
+
     </style>
+
 </head>
+
 <body>
+
     <a href="Main.html" class="home-nav">
+
         <img src="Me behind door spectroscopy.png" alt="Home">
+
     </a>
+
     <div class="container">
+
         <h1 class="title">Shorter Thoughts</h1>
+
         <div class="overlay" id="overlay"></div>
-        
+
+       
+
         <div class="thought-bubble" data-thought="6" data-thought-title="Brain Gyms and AI" data-thought-content="Fitness influencers have been a thing for over 100 years. Nothing has changed, people only get fatter. Why would this time be any different.
 
 Meditation has been around for thousands of years. Nothing has changed, people are sadder and more reliant on drugs now than ever. Why would this time be any different?
@@ -274,391 +465,775 @@ Will we soon realize that metabolic demands of thinking are crucial for health a
 Will centers for complex integrals for no explicit purpose soon be crucial aspects of biohackers health and longevity routines?
 
 That's why I'm studying physics. LOL 😹.">
+
             <div class="thought-text">Brain Gyms and AI</div>
+
             <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
         </div>
+
+        <div class="thought-bubble" data-thought="7" data-thought-title="Happiness" data-thought-content="People think that being happy is about doing something, thinking something, or they think that it's a thing. But really, happiness is a non - thing. It's about kinda being a retard. Just empty minded floating thru space. Like duhhhh hey, I'm here 😀. Ppl try to be happy and thats exactly what prevents the happy from coming. To be happy, you really have to try to be retarded. Just be retarded and absent minded.
+
+This doesn't mean you should also be an idiot or un intelligent, actually being an idiot is exactly what we're trying to avoid. Idiocy is thinking really hard or thinking too hard and not getting any anywhere or any answers right. Being retarded is just being retarded. This is exactly the point of meditation, to cultivate such a profound state of focus that your brain just beams off into absent minded retardation, while also maintaining the ability to be aware present and sharp if you want to.
+
+For Happiness, there's nothing to think about, and you think there is, that's why you're not happy. Literally just stop thinking so hard about shit and you'll be good. Think about stuff - like think about how you're gonna do this thing or that thing, but definitely don't think about how you feel, that's a recipe for un-happiness. Let yourself feel how you feel and at the same time don't think about it. Does that make sense? If you're not happy, you're probably an idiot, if you're happy, you're probably being retarded. Just duh, I'm here. Hehe. Some of the times when I've been happiest in my life were actually when I had a concussion (I've had like 6). I had no space or time to think, I was just retarded watching the trees rustling, cuz my brain was empty and legit couldn't think. There are ways to train non thinking (meditation, sports, art, other non-stressful hobbies that involve not thinking and becoming very enthralled in the thing you're doing). But if your brain is just too active that you cant stop thinking and just be retarded, try to down regulate your physiology enough so you can allow yourself to be more retarded again. There are ways to do that too, adequate nutrition and light environment, meditation, friends, reading (especially dumb books), intense exercise and sufficient rest after, healing old injuries in the body (this is a big one), but you shouldn't need any of that, happiness is mostly a thinking thing, those things just help.
+
+Happiness by nature comes and goes. Don't force it, don't force any feelings, if a feeling arises you don't like, don't force it away. You should be retarded enough not to notice that you don't like the feeling and also retarded enough not to care about the feeling if you do. Just maintain a constant retardation in all things you do and all things you feel and you'll feel happy at some point pretty soon. Make sure not to wait for retardation, or happiness will never come. Must be retarded now.
+
+So, overall the goal is to be retarded and happy, and also intelligent at the same time because we want to actually be aware of our happiness and also we wanna have cool interesting well articulated thoughts and do cool good things in life.
+
+So, all that means is you need to separate the too. Be intelligent, but also be retarded in life. Be an intelligent, calm, smiling retard, but mostly an absent minded retard.">
+
+            <div class="thought-text">Happiness</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="8" data-thought-title="I Hate Hikes" data-thought-content="I to some degree hate hikes, because you do the hike and get to the top and you’re supposed to say oh my golly this is the most beautiful absurd thing i’ve ever seen. Then you sorta just say alright, take a pic make a pose and back down the mountain we go, and make sure to stay on the trail as you do. But it never really lives up to the hype does it? Hikes are a weird pilgrimage or journey thing, a bunch of serious people wearing their maps and hiking clothes and fancy backpacks saying alright we’re going up as and this is a mission we all must do.
+        On the way up you see people who are on the way down and tell you oh yeah you’re almost there just a bit more, and they say how magnificent and beautiful it all is at the top and oh its so worth it. And you smile and say okay! Then you keep walking up hill.And you build up some expectation of how it’s supposed to be, and then you get there and see a bunch of people sitting eating a sandwich.  I don’t really get why people go on hikes.">
+
+            <div class="thought-text">I Hate Hikes</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="9" data-thought-title="Quantum Mechanics Many Worlds Interpretation" data-thought-content="In quantum mechanics, each particle, like an electron for example, holds many different possible positions at once. Meaning the particle could literally be in multiple different places until it is observed. Once the particle is observed, the wave function that describes the particle's different possible positions collapses, and the particle in question takes on one specific position in space, the one that you now see. One explanation of wave function collapse is the many worlds interpretation which describes that all possible outcomes of quantum measurement actually do occur. Meaning, each different possible position that a particle could hold actually occurs in another reality. Instead of wave function collapse and the particle taking on just one position in space, reality continually splits into parallel worlds where each quantum possibility occurs.
+
+        The philosophical interpretation of this theory suggests that there are an infinite number of parallel universes, each with different iterations and possibilities for what could have happened (or in this case because the other universes are actually real, did happen). So, within these infinite other worlds, there are an infinite number of Alexanders, each living similar, or not-so-similar lives, with inflection points at different decisions in their lives. It's a little bit crazy to think that there is literally another universe with another me, standing typing on his computer, who equally believes that he is the real, truest, most original me, and his life is about to take an entirely different path depending on what he decides to do next. But in this specific world, where I feel I am me, and you feel you are you reading this paper, I cannot know what happens to the other equally real me's, who decided to finish this sentence differently.
+        
+        I just have to live, and I know that somewhere else, in another galaxy or planet or part of the space-time continuum, there is an Alexander who lived his life, so that I don't have to. And that gives me peace knowing it's okay for me to live this life.
+        
+        In another world, Pop is happy with Alexander because he got a nice job right after graduation. In another world, there is an Alexander who dropped out of college and already built a billion-dollar startup. But that me is not me. For me, who feels his body is his own in this cosmically independent world, I just have to live, and I know that somewhere else, in another galaxy or planet or some other part of the space-time continuum, there exists an Alexander who lived the other way that I was thinking about living. There is another Alexander who achieved all his dreams and wishes, and there's also one who did not.
+        
+        I just have to be this Alexander and I shouldn't try to live the best life of all the Alexanders either, because that's impossible since there will always be a better Alexander (how would you even quantify which one is the better anyway). And that's all I can do. And this is how I want to live no matter what people tell or encourage me to do. There are some Alexanders who are successful, some who die young, some who are Olympic athletes or professional soccer players, some who are high school teachers, and some who are Buddhist monks or deep-sea explorers. Hopefully none are wife beaters or murderers or corrupt politicians, hopefully there isn't a Benjamin Netanyahu version of me, but unfortunately there probably is somewhere.
+        
+        There are probably even fewer me's though who are okay with their lives, and don't envy the other great Alexanders. Somewhere within the infinite multiplicity of possible lives I've lived, there are at least enough Alexanders who are happy, peaceful, and present. Probably those who are, decided to live their own, and that's the thread I'd like to weave. Because those other lives are inherently inaccessible to this Alexander. There is only this one and I only have 150-200 years to live it. Luckily, I am in no rush. Memento Mori.
+        “Your time is limited, so don't waste it living someone else's life. Don't be trapped by dogma — which is living with the results of other people's thinking. Don't let the noise of others' opinions drown out your own inner voice. And most important, have the courage to follow your heart and intuition. They somehow already know what you truly want to become. Everything else is secondary.” - Steve Jobs
+        ">
+
+            <div class="thought-text">Quantum Mechanics Many Worlds Interpretation</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
     </div>
 
     <script>
+
         let focusedBubble = null;
+
         let bubbles = [];
+
         let animationId = null;
+
         let isAnimating = false;
+
         let lastTime = 0;
+
         const ANIMATION_INTERVAL = 16; // ~60fps
 
         class Bubble {
+
             constructor(element, index) {
+
                 this.element = element;
+
                 this.index = index;
+
                 this.x = Math.random() * (window.innerWidth - 200) + 100;
+
                 this.y = Math.random() * (window.innerHeight - 200) + 100;
-                this.vx = (Math.random() - 0.5) * 0.8;
-                this.vy = (Math.random() - 0.5) * 0.8;
+
+                this.vx = (Math.random() - 0.5) * 1;
+
+                this.vy = (Math.random() - 0.5) * 1;
+
                 this.isPaused = false;
+
                 this.isDragging = false;
+
                 this.hasDragged = false;
+
                 this.dragOffset = { x: 0, y: 0 };
-                this.radius = 75;
+
+                this.radius = 90;
+
                 this.isMoving = true;
-                
+
+               
+
                 this.element.style.left = this.x + 'px';
+
                 this.element.style.top = this.y + 'px';
-                
+
+               
+
                 this.setupEventListeners();
+
             }
-            
+
+           
+
             setupEventListeners() {
+
                 this.element.addEventListener('mouseenter', () => {
+
                     if (!focusedBubble) {
+
                         this.isPaused = true;
+
                         this.checkAnimationNeeded();
+
                     }
+
                 });
-                
+
+               
+
                 this.element.addEventListener('mouseleave', () => {
+
                     if (!this.isDragging) {
+
                         this.isPaused = false;
+
                         this.isMoving = true;
+
                         this.startAnimation();
+
                     }
+
                 });
-                
+
+               
+
                 this.element.addEventListener('mousedown', (e) => {
+
                     if (!focusedBubble) {
+
                         this.startDrag(e);
+
                     }
+
                 });
-                
+
+               
+
                 this.element.addEventListener('click', (e) => {
+
                     if (!focusedBubble && !this.hasDragged) {
+
                         e.stopPropagation();
+
                         focusBubble(this.element, this.index);
+
                     }
+
                 });
+
             }
-            
+
+           
+
             startDrag(e) {
+
                 this.isDragging = true;
+
                 this.hasDragged = false;
+
                 this.isPaused = true;
+
                 this.element.style.cursor = 'grabbing';
-                
+
+               
+
                 const rect = this.element.getBoundingClientRect();
+
                 this.dragOffset.x = e.clientX - rect.left - rect.width / 2;
+
                 this.dragOffset.y = e.clientY - rect.top - rect.height / 2;
-                
+
+               
+
                 document.addEventListener('mousemove', this.onDrag);
+
                 document.addEventListener('mouseup', this.stopDrag);
-                
+
+               
+
                 e.preventDefault();
+
             }
-            
+
+           
+
             onDrag = (e) => {
+
                 if (!this.isDragging) return;
-                
+
+               
+
                 this.hasDragged = true;
-                
+
+               
+
                 this.x = e.clientX - this.dragOffset.x - 70;
+
                 this.y = e.clientY - this.dragOffset.y - 70;
-                
+
+               
+
                 this.x = Math.max(75, Math.min(window.innerWidth - 75, this.x));
+
                 this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
-                
+
+               
+
                 this.element.style.transform = `translate(${this.x - parseFloat(this.element.style.left)}px, ${this.y - parseFloat(this.element.style.top)}px)`;
+
             }
-            
+
+           
+
             stopDrag = () => {
+
                 if (!this.isDragging) return;
-                
+
+               
+
                 this.isDragging = false;
+
                 this.isPaused = false;
+
                 this.element.style.cursor = 'pointer';
-                
+
+               
+
                 requestAnimationFrame(() => {
+
                     this.element.style.left = this.x + 'px';
+
                     this.element.style.top = this.y + 'px';
+
                     this.element.style.transform = '';
+
                 });
-                
+
+               
+
                 document.removeEventListener('mousemove', this.onDrag);
+
                 document.removeEventListener('mouseup', this.stopDrag);
-                
+
+               
+
                 setTimeout(() => {
+
                     this.hasDragged = false;
+
                 }, 150);
-                
-                this.vx = (Math.random() - 0.5) * 0.8;
-                this.vy = (Math.random() - 0.5) * 0.8;
+
+               
+
+                this.vx = (Math.random() - 0.5) * 1;
+
+                this.vy = (Math.random() - 0.5) * 1;
+
                 this.isMoving = true;
+
                 this.startAnimation();
+
             }
-            
+
+           
+
             update() {
+
                 if (this.isPaused || focusedBubble || this.isDragging) {
+
                     this.isMoving = false;
+
                     return false;
+
                 }
-                
+               
                 let moved = false;
                 
+
+               
+
                 // Only update if velocity is significant
+
                 if (Math.abs(this.vx) > 0.01 || Math.abs(this.vy) > 0.01) {
+
                     this.x += this.vx;
+
                     this.y += this.vy;
+
                     moved = true;
-                    
+
+                   
+
                     // Bounce off edges
+
                     if (this.x <= this.radius || this.x >= window.innerWidth - this.radius) {
-                        this.vx *= -0.95; // Add slight damping
+
+                        this.vx *= -1; // Add slight damping
+
                         this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
+
                     }
+
                     if (this.y <= 75 || this.y >= window.innerHeight - 75) {
-                        this.vy *= -0.95; // Add slight damping
+
+                        this.vy *= -1; // Add slight damping
+
                         this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+
                     }
-                    
-                    // Apply friction
-                    this.vx *= 0.999;
-                    this.vy *= 0.999;
-                    
+
+                   
+
+                   
+
                     this.element.style.left = this.x + 'px';
+
                     this.element.style.top = this.y + 'px';
+
                 }
-                
+
+               
+
                 if (!moved) {
+
                     this.isMoving = false;
+
                 }
-                
+
+               
+
                 return moved;
+
             }
-            
+
+           
+
             checkAnimationNeeded() {
-                const needsAnimation = bubbles.some(bubble => 
+
+                const needsAnimation = bubbles.some(bubble =>
+
                     bubble.isMoving && !bubble.isPaused && !bubble.isDragging
+
                 );
-                
+
+               
+
                 if (!needsAnimation && isAnimating) {
+
                     this.stopAnimation();
+
                 }
+
             }
-            
+
+           
+
             startAnimation() {
+
                 if (!isAnimating) {
+
                     isAnimating = true;
+
                     animate();
+
                 }
+
             }
-            
+
+           
+
             stopAnimation() {
+
                 if (animationId) {
+
                     cancelAnimationFrame(animationId);
+
                     animationId = null;
+
                     isAnimating = false;
+
                 }
+
             }
+
         }
 
         function animate(currentTime = 0) {
+
             if (currentTime - lastTime >= ANIMATION_INTERVAL) {
+
                 let anyMoving = false;
-                
+
+               
+
                 bubbles.forEach(bubble => {
+
                     if (bubble.update()) {
+
                         anyMoving = true;
+
                     }
+
                 });
-                
+
+               
+
                 // Stop animation if nothing is moving
+
                 if (!anyMoving && !focusedBubble) {
+
                     isAnimating = false;
+
                     return;
+
                 }
-                
+
+               
+
                 lastTime = currentTime;
+
             }
-            
+
+           
+
             if (isAnimating) {
+
                 animationId = requestAnimationFrame(animate);
+
             }
+
         }
 
         function initializeBubbles() {
+
             const bubbleElements = document.querySelectorAll('.thought-bubble');
+
             bubbles = [];
-            
+
+           
+
             bubbleElements.forEach((element, index) => {
+
                 bubbles.push(new Bubble(element, index));
+
             });
-            
+
+           
+
             // Start animation only if bubbles are moving
+
             if (bubbles.some(bubble => bubble.isMoving)) {
+
                 isAnimating = true;
+
                 animate();
+
             }
+
         }
 
         function focusBubble(bubble, index) {
+
             if (focusedBubble) return;
-            
+
+           
+
             focusedBubble = bubble;
+
             const overlay = document.getElementById('overlay');
+
             const bubbleElements = document.querySelectorAll('.thought-bubble');
 
+            // Update URL with the thought title for sharing
+
+            const thoughtTitle = bubble.getAttribute('data-thought-title');
+
+            const urlSlug = thoughtTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+            window.history.pushState({ thoughtIndex: index }, '', `#${urlSlug}`);
+
             const content = bubble.getAttribute('data-thought-content');
+
             if (content !== null) {
+
                 const thoughtTextDiv = bubble.querySelector('.thought-text');
+
                 if (thoughtTextDiv) {
+
                     thoughtTextDiv.textContent = content;
+
                 }
+
             }
-            
-            // Update URL with bubble name
-            const bubbleTitle = bubble.getAttribute('data-thought-title') || `thought-${index}`;
-            const urlFriendlyTitle = bubbleTitle.toLowerCase()
-                .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-                .replace(/\s+/g, '-') // Replace spaces with hyphens
-                .replace(/-+/g, '-') // Replace multiple hyphens with single
-                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-            
-            history.pushState({ bubbleIndex: index, bubbleTitle: bubbleTitle }, bubbleTitle, `#${urlFriendlyTitle}`);
-            
+
+           
+
             overlay.classList.add('active');
+
             bubble.classList.add('focused');
+
             document.body.style.overflow = 'auto';
-            
+
+           
+
             bubbleElements.forEach((otherBubble, otherIndex) => {
+
                 if (otherBubble !== bubble) {
+
                     otherBubble.classList.add('minimized');
+
                     repositionToCorner(otherBubble, otherIndex);
+
                 }
+
             });
-            
+
+           
+
             // Stop animation when focused
+
             bubbles.forEach(bubble => {
+
                 bubble.isMoving = false;
+
                 bubble.isPaused = true;
+
             });
-            
+
+           
+
             if (isAnimating) {
+
                 isAnimating = false;
+
                 if (animationId) {
+
                     cancelAnimationFrame(animationId);
+
                     animationId = null;
+
                 }
+
             }
+
         }
 
         function repositionToCorner(bubble, index) {
+
             const positions = [
+
                 { x: 50, y: 100 },
-                { x: window.innerWidth - 120, y: 100 },
-                { x: 50, y: window.innerHeight - 120 },
-                { x: window.innerWidth - 120, y: window.innerHeight - 120 }
+
+                { x: Math.max(50, window.innerWidth - 120), y: 100 },
+
+                { x: 50, y: Math.max(100, window.innerHeight - 120) },
+
+                { x: Math.max(50, window.innerWidth - 120), y: Math.max(100, window.innerHeight - 120) }
+
             ];
-            
+
+           
+
             const pos = positions[index % positions.length];
+
             bubble.style.left = pos.x + 'px';
+
             bubble.style.top = pos.y + 'px';
+
         }
 
         function closeFocus() {
+
             if (!focusedBubble) return;
-            
+
+           
+
             const overlay = document.getElementById('overlay');
+
             const bubbleElements = document.querySelectorAll('.thought-bubble');
-            
+
+           
+
+            // Clear URL hash when closing
+
+            window.history.pushState('', '', window.location.pathname);
+
+           
+
             const contentAttr = focusedBubble.getAttribute('data-thought-content');
+
             if (contentAttr !== null) {
+
                 const originalText = focusedBubble.dataset.thoughtTitle || '';
+
                 const thoughtTextDiv = focusedBubble.querySelector('.thought-text');
+
                 if (thoughtTextDiv) {
+
                     thoughtTextDiv.textContent = originalText;
+
                 }
+
             }
-            
-            // Clear URL hash
-            history.pushState('', document.title, window.location.pathname + window.location.search);
-            
+
+           
+
             overlay.classList.remove('active');
+
             focusedBubble.classList.remove('focused');
+
             document.body.style.overflow = 'hidden';
-            
+
+           
+
             bubbleElements.forEach((bubble) => {
+
                 bubble.classList.remove('minimized');
+
             });
-            
+
+           
+
             focusedBubble = null;
-            
+
+           
+
             // Resume animation
+
             bubbles.forEach(bubble => {
+
                 bubble.isPaused = false;
+
                 bubble.isMoving = true;
+
             });
-            
+
+           
+
             if (!isAnimating) {
+
                 isAnimating = true;
+
                 animate();
+
             }
+
         }
 
+        // Function to handle direct links to thoughts
+
+        function handleDirectLink() {
+
+            const hash = window.location.hash.slice(1); // Remove the #
+
+            if (!hash) return;
+
+           
+
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+           
+
+            bubbleElements.forEach((bubble, index) => {
+
+                const thoughtTitle = bubble.getAttribute('data-thought-title');
+
+                const urlSlug = thoughtTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+               
+
+                if (urlSlug === hash) {
+
+                    // Small delay to ensure bubbles are initialized
+
+                    setTimeout(() => {
+
+                        focusBubble(bubble, index);
+
+                    }, 200);
+
+                }
+
+            });
+
+        }
+
+        // Handle browser back/forward buttons
+
+        window.addEventListener('popstate', (event) => {
+
+            if (focusedBubble && !window.location.hash) {
+
+                closeFocus();
+
+            } else if (!focusedBubble && window.location.hash) {
+
+                handleDirectLink();
+
+            }
+
+        });
+
         // Event listeners
+
         document.getElementById('overlay').addEventListener('click', closeFocus);
+
         document.addEventListener('keydown', (e) => {
+
             if (e.key === 'Escape') closeFocus();
+
         });
 
         // Handle window resize
+
         window.addEventListener('resize', () => {
+
             if (!focusedBubble) {
+
                 bubbles.forEach(bubble => {
+
                     bubble.x = Math.min(bubble.x, window.innerWidth - bubble.radius);
+
                     bubble.y = Math.min(bubble.y, window.innerHeight - bubble.radius);
-                });
-            }
-        });
 
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.bubbleIndex !== undefined) {
-                // Navigate to specific bubble
-                const bubbleElements = document.querySelectorAll('.thought-bubble');
-                const targetBubble = bubbleElements[event.state.bubbleIndex];
-                if (targetBubble && !focusedBubble) {
-                    focusBubble(targetBubble, event.state.bubbleIndex);
-                }
-            } else {
-                // Close any open bubble
-                closeFocus();
-            }
-        });
-
-        // Check for hash on page load to open specific bubble
-        function checkInitialHash() {
-            const hash = window.location.hash.slice(1); // Remove the #
-            if (hash) {
-                const bubbleElements = document.querySelectorAll('.thought-bubble');
-                bubbleElements.forEach((bubble, index) => {
-                    const bubbleTitle = bubble.getAttribute('data-thought-title') || `thought-${index}`;
-                    const urlFriendlyTitle = bubbleTitle.toLowerCase()
-                        .replace(/[^a-z0-9\s]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/-+/g, '-')
-                        .replace(/^-|-$/g, '');
-                    
-                    if (urlFriendlyTitle === hash) {
-                        // Small delay to ensure bubbles are initialized
-                        setTimeout(() => focusBubble(bubble, index), 100);
-                    }
                 });
+
             }
-        }
+
+        });
 
         // Initialize when page loads
+
         window.addEventListener('load', () => {
-            initializeBubbles();
-            checkInitialHash();
+
+            // Small delay to ensure window dimensions are available
+
+            setTimeout(() => {
+
+                initializeBubbles();
+
+                // Handle direct links after initialization
+
+                handleDirectLink();
+
+            }, 100);
+
         });
+
     </script>
+
 </body>
+
 </html>

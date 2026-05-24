@@ -455,7 +455,7 @@ the way to do is to be.
         function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
             const poem = images[currentImage];
-            document.getElementById('mainImage').src = poem.src;
+            document.getElementById('mainImage').src = '/' + poem.src;
             document.getElementById('imageTitle').textContent = poem.title;
             document.getElementById('poemText').textContent = poem.poem;
 

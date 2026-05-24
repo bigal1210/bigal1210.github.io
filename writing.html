@@ -151,7 +151,7 @@
         async function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
             const article = articles[currentImage];
-            document.getElementById('mainImage').src = article.src;
+            document.getElementById('mainImage').src = '/' + article.src;
             document.getElementById('imageTitle').textContent = article.title;
 
             // Update URL with current article ID

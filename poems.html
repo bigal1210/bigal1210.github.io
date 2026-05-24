@@ -2,6 +2,14 @@
 <html>
 <head>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+    <title>Poems</title>
+    <meta property="og:title" content="Poems">
+    <meta property="og:image" content="https://alexanderatalla.com/preview.jpg">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://alexanderatalla.com/poems.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Poems">
+    <meta name="twitter:image" content="https://alexanderatalla.com/preview.jpg">
     <style>
     
         * {
@@ -441,12 +449,22 @@ the way to do is to be.
         // Function to update display with current poem
         function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
-            document.getElementById('mainImage').src = images[currentImage].src;
-            document.getElementById('imageTitle').textContent = images[currentImage].title;
-            document.getElementById('poemText').textContent = images[currentImage].poem;
-            
+            const poem = images[currentImage];
+            document.getElementById('mainImage').src = poem.src;
+            document.getElementById('imageTitle').textContent = poem.title;
+            document.getElementById('poemText').textContent = poem.poem;
+
             // Update URL with current poem ID
-            updateURL(images[currentImage].id);
+            updateURL(poem.id);
+
+            // Update OG meta tags for link previews
+            const imageUrl = 'https://alexanderatalla.com/' + encodeURIComponent(poem.src);
+            document.title = poem.title;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', poem.title);
+            document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+            document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://alexanderatalla.com/poems.html?poem=' + poem.id);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', poem.title);
+            document.querySelector('meta[name="twitter:image"]').setAttribute('content', imageUrl);
         }
 
         function previousImage() {

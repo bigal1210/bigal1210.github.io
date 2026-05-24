@@ -2,6 +2,14 @@
 <html>
 <head>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+    <title>Writing</title>
+    <meta property="og:title" content="Writing">
+    <meta property="og:image" content="https://alexanderatalla.com/preview.jpg">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://alexanderatalla.com/writing.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Writing">
+    <meta name="twitter:image" content="https://alexanderatalla.com/preview.jpg">
     <style>
         * {
             font-family: 'IBM Plex Mono', monospace;
@@ -137,11 +145,21 @@
         // Function to update display with current article
         async function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
-            document.getElementById('mainImage').src = articles[currentImage].src;
-            document.getElementById('imageTitle').textContent = articles[currentImage].title;
-            
+            const article = articles[currentImage];
+            document.getElementById('mainImage').src = article.src;
+            document.getElementById('imageTitle').textContent = article.title;
+
             // Update URL with current article ID
-            updateURL(articles[currentImage].id);
+            updateURL(article.id);
+
+            // Update OG meta tags for link previews
+            const imageUrl = 'https://alexanderatalla.com/' + encodeURIComponent(article.src);
+            document.title = article.title;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', article.title);
+            document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+            document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://alexanderatalla.com/writing.html?article=' + article.id);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', article.title);
+            document.querySelector('meta[name="twitter:image"]').setAttribute('content', imageUrl);
             
             try {
                 const response = await fetch(articles[currentImage].textFile);

@@ -94,7 +94,7 @@
     <div class="container">
         <div class="carousel">
             <button onclick="previousImage()">&#60;</button>
-            <img id="mainImage" src="hair dresser.jpeg" onclick="imageClicked()">
+            <img id="mainImage" src="/hair%20dresser.jpeg" onclick="imageClicked()">
             <button onclick="nextImage()">&#62;</button>
         </div>
         <h2 id="imageTitle">AI Killed Languages - That's Why I'm Either Learning Japanese or Farsi Next (Probably Farsi)</h2>
@@ -151,7 +151,7 @@
         async function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
             const article = articles[currentImage];
-            document.getElementById('mainImage').src = '/' + article.src;
+            document.getElementById('mainImage').src = '/' + encodeURIComponent(article.src);
             document.getElementById('imageTitle').textContent = article.title;
 
             // Update URL with current article ID

@@ -102,7 +102,7 @@
     <div class="container">
         <div class="carousel">
             <button onclick="previousImage()">&#60;</button>
-            <img id="mainImage" src="gravity and space.jpg" onclick="imageClicked()">
+            <img id="mainImage" src="/gravity%20and%20space.jpg" onclick="imageClicked()">
             <button onclick="nextImage()">&#62;</button>
         </div>
         <h2 id="imageTitle">The Best Way to Spend 4 Years</h2>
@@ -455,7 +455,7 @@ the way to do is to be.
         function updateImage(index) {
             currentImage = index !== undefined ? index : currentImage;
             const poem = images[currentImage];
-            document.getElementById('mainImage').src = '/' + poem.src;
+            document.getElementById('mainImage').src = '/' + encodeURIComponent(poem.src);
             document.getElementById('imageTitle').textContent = poem.title;
             document.getElementById('poemText').textContent = poem.poem;
 

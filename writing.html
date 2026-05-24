@@ -167,7 +167,7 @@
             document.querySelector('meta[name="twitter:image"]').setAttribute('content', imageUrl);
             
             try {
-                const response = await fetch(articles[currentImage].textFile);
+                const response = await fetch('/' + articles[currentImage].textFile);
                 const text = await response.text();
                 document.getElementById('articleText').textContent = text;
             } catch (error) {

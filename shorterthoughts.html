@@ -12,6 +12,14 @@
 
     <title>Shorter Thoughts</title>
 
+    <meta property="og:title" content="Shorter Thoughts">
+    <meta property="og:description" content="Shorter Thoughts">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bigal1210.github.io/shorterthoughts.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Shorter Thoughts">
+    <meta name="twitter:description" content="Shorter Thoughts">
+
     <style>
 
         .home-nav {
@@ -1129,6 +1137,12 @@ What would it have looked like if we looked at all sciences from the viewpoint o
 
             window.history.pushState({ thoughtIndex: index }, '', `#${urlSlug}`);
 
+            // Update page title and OG meta tags for link previews
+            document.title = thoughtTitle + ' — Shorter Thoughts';
+            document.querySelector('meta[property="og:title"]').setAttribute('content', thoughtTitle + ' — Shorter Thoughts');
+            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', thoughtTitle + ' — Shorter Thoughts');
+
             const content = bubble.getAttribute('data-thought-content');
 
             if (content !== null) {
@@ -1234,6 +1248,12 @@ What would it have looked like if we looked at all sciences from the viewpoint o
             // Clear URL hash when closing
 
             window.history.pushState('', '', window.location.pathname);
+
+            // Reset title and OG meta tags
+            document.title = 'Shorter Thoughts';
+            document.querySelector('meta[property="og:title"]').setAttribute('content', 'Shorter Thoughts');
+            document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://bigal1210.github.io/shorterthoughts.html');
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', 'Shorter Thoughts');
 
            
 

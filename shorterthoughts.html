@@ -1138,10 +1138,10 @@ What would it have looked like if we looked at all sciences from the viewpoint o
             window.history.pushState({ thoughtIndex: index }, '', `#${urlSlug}`);
 
             // Update page title and OG meta tags for link previews
-            document.title = thoughtTitle + ' — Shorter Thoughts';
-            document.querySelector('meta[property="og:title"]').setAttribute('content', thoughtTitle + ' — Shorter Thoughts');
+            document.title = thoughtTitle;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', thoughtTitle);
             document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
-            document.querySelector('meta[name="twitter:title"]').setAttribute('content', thoughtTitle + ' — Shorter Thoughts');
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', thoughtTitle);
 
             const content = bubble.getAttribute('data-thought-content');
 

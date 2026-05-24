@@ -136,9 +136,14 @@
             return articles.findIndex(article => article.id === id);
         }
 
+        // Slugify an article ID for use in URL paths
+        function slugify(s) {
+            return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+
         // Function to update URL when article changes
         function updateURL(articleId) {
-            const newURL = `${window.location.pathname}?article=${articleId}`;
+            const newURL = `/e/${slugify(articleId)}.html`;
             window.history.pushState({ articleId }, '', newURL);
         }
 

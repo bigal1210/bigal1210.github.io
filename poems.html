@@ -440,9 +440,14 @@ the way to do is to be.
             return images.findIndex(image => image.id === id);
         }
 
+        // Slugify a poem ID for use in URL paths
+        function slugify(s) {
+            return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+
         // Function to update URL when poem changes
         function updateURL(poemId) {
-            const newURL = `${window.location.pathname}?poem=${poemId}`;
+            const newURL = `/p/${slugify(poemId)}.html`;
             window.history.pushState({ poemId }, '', newURL);
         }
 

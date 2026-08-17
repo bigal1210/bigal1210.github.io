@@ -107,9 +107,16 @@
         }
 
         .skip-recent-arrow {
-            font-size: 28px;
+            font-size: 14px;
             font-weight: 300;
             line-height: 1;
+            width: 28px;
+            height: 28px;
+            border: 1px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .skip-recent-text {
@@ -124,8 +131,8 @@
         <img src="/Me behind door spectroscopy.png" alt="Home">
     </a>
     <div class="skip-recent" onclick="skipToMostRecent()">
-        <span class="skip-recent-arrow">&#60;</span>
-        <span class="skip-recent-text">most recent</span>
+        <span class="skip-recent-arrow">&#62;</span>
+        <span class="skip-recent-text">skip to most recent poem</span>
     </div>
     <div class="container">
         <div class="carousel">

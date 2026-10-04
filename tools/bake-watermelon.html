@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Bake watermelon artwork</title>
+<button id="bake">Generate saved artwork</button><pre id="status">Ready. This draws the original artwork once, then saves lossless PNG textures.</pre>
+<script type="module">
+import { generateArtwork } from './watermelon-artwork.js';
+document.querySelector('#bake').onclick = async () => {
+    const button = document.querySelector('#bake'), status = document.querySelector('#status');
+    button.disabled = true;
+    status.textContent = 'Drawing artwork…';
+    await new Promise(resolve => setTimeout(resolve, 50));
+    try {
+        const start = performance.now();
+        const art = generateArtwork();
+        for (const name of ['rind', 'flesh', 'writing']) {
+            const blob = await new Promise(resolve => art[name].toBlob(resolve, 'image/png'));
+            const response = await fetch('/__bake/' + name, { method: 'POST', body: blob });
+            if (!response.ok) throw new Error('Could not save ' + name);
+        }
+        const response = await fetch('/__bake/state', { method: 'POST', body: String(art.seedRandomState) });
+        if (!response.ok) throw new Error('Could not save random state');
+        status.textContent = 'Saved all three 4096 × 4096 textures. Original drawing took ' + ((performance.now() - start) / 1000).toFixed(2) + ' seconds. Seed state: ' + art.seedRandomState;
+    } catch (error) { status.textContent = error.message; }
+    button.disabled = false;
+};
+</script></html>

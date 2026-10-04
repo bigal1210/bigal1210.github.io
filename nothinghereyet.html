@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ramblings — Alexander Atalla</title>
+    <link rel="preload" as="image" href="assets/textures/rind.png">
+    <link rel="preload" as="image" href="assets/textures/flesh.png">
+    <link rel="preload" as="image" href="assets/textures/writing.png">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -18,16 +21,17 @@
         canvas:active { cursor: grabbing; }
         .hint { position: fixed; bottom: 28px; width: 100%; margin: 0; text-align: center; font-size: 11px; letter-spacing: .06em; color: #777777; pointer-events: none; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: pre-line; }
-        #fallback { position: absolute; top: 45%; width: 100%; text-align: center; padding: 24px; }
+        #fallback, #loading { position: absolute; top: 45%; width: 100%; text-align: center; padding: 24px; }
+        #loading { color: #777777; font-size: 12px; }
         @media (max-width: 600px) { header { top: 24px; left: 22px; right: 22px; } }
         @media (prefers-reduced-motion: reduce) { main { height: 100vh; } }
     </style>
 </head>
 <body>
     <header><a href="Main.html">← Alexander Atalla</a><h1>Ramblings</h1></header>
-    <main><div id="scene" role="img" aria-describedby="rambling-text" aria-label="A black-and-white woodcut-style watermelon, with bold ink stripes, carved white marks, and irregular hatched shading. Drag to turn it, or scroll to look closer."><p id="fallback" hidden>The 3D preview couldn’t load. Please try a browser with WebGL enabled.</p></div></main>
+    <main><div id="scene" role="img" aria-describedby="rambling-text" aria-label="A black-and-white woodcut-style watermelon, with bold ink stripes, carved white marks, and irregular hatched shading. Drag to turn it, or scroll to look closer."><p id="loading" role="status">Loading watermelon…</p><p id="fallback" role="alert" hidden>The watermelon couldn’t load. <a href="nothinghereyet.html">Try again</a>, or try a browser with WebGL enabled.</p></div></main>
     <p id="rambling-text" class="sr-only"></p>
     <p class="hint">drag to turn · scroll to look closer</p>
-    <script type="module" src="assets/watermelon.js"></script>
+    <script type="module" src="assets/ramblings-page.js"></script>
 </body>
 </html>

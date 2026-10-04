@@ -1,5 +1,5 @@
 performance.mark('watermelon-start');
-import('./watermelon.js?v=hint-2').catch(error => {
+import('./watermelon.js?v=seed-toggle-1').catch(error => {
     document.querySelector('#loading').hidden = true;
     document.querySelector('#fallback').hidden = false;
     document.querySelector('.hint').hidden = true;

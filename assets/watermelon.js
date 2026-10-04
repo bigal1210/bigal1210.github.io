@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
-import { firstRambling } from './ramblings.js';
+import { firstRambling, flowRambling } from './ramblings.js?v=seed-spiral-1';
 import { seedRandomState } from './textures/artwork-state.js';
 import { inSpinBand, pointerOnFace, angleStep } from './watermelon-spin.js';
 
@@ -58,13 +58,13 @@ function stroke(ctx, points, opacity, width = 1, color = '28,28,28') {
 // Artwork is baked once with tools/bake-watermelon.py, not redrawn on visits.
 const loader = new THREE.TextureLoader();
 async function loadArtwork(name) {
-    const texture = await loader.loadAsync(new URL(`./textures/${name}.png`, import.meta.url).href);
+    const texture = await loader.loadAsync(new URL(`./textures/${name}.png${name === 'seed-flow' ? '?v=phrases-2' : ''}`, import.meta.url).href);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return texture;
 }
-const [rindTexture, fleshTexture, writingTexture] = await Promise.all(
-    ['rind', 'flesh', 'writing'].map(loadArtwork));
+const [rindTexture, fleshTexture, writingTexture, seedWritingTexture] = await Promise.all(
+    ['rind', 'flesh', 'writing', 'seed-flow'].map(loadArtwork));
 
 const melon = new THREE.Group();
 melon.scale.set(1.13, 1, .91);
@@ -87,7 +87,7 @@ flesh.position.z = .012;
 melon.add(flesh);
 
 // Lettering lies on the exposed flesh and shares the watermelon's transform.
-document.querySelector('#rambling-text').textContent = firstRambling.join('\n\n');
+document.querySelector('#rambling-text').textContent = [...firstRambling, ...flowRambling].join('\n\n');
 const writingPlaneSize = 3.8;
 const writingMaterial = new THREE.MeshBasicMaterial({ map: writingTexture, transparent: true, depthWrite: false });
 const writing = new THREE.Mesh(new THREE.PlaneGeometry(writingPlaneSize, writingPlaneSize), writingMaterial);
@@ -146,6 +146,12 @@ melon.add(outline);
 // A separate generator preserves the established positions and other textures.
 const seedMaterial = new THREE.MeshBasicMaterial({ color: 0x242424 });
 const cutMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const seedReadingMaterial = new THREE.MeshBasicMaterial({
+    map: seedWritingTexture, transparent: true, depthWrite: false, opacity: 0
+});
+const readingCutMaterial = cutMaterial.clone();
+readingCutMaterial.transparent = true;
+let ramblingSeed;
 function createInkSeed(index) {
     let state = 9203 + index * 173;
     const variation = () => {
@@ -189,7 +195,7 @@ function createInkSeed(index) {
         cut.lineTo(offset + width * .85, .016);
         cut.quadraticCurveTo(offset + width * .7, top * .7, offset, top);
     }
-    const carving = new THREE.Mesh(new THREE.ShapeGeometry(cut, 12), cutMaterial);
+    const carving = new THREE.Mesh(new THREE.ShapeGeometry(cut, 12), index === 1 ? readingCutMaterial : cutMaterial);
     carving.position.z = .007;
     seed.add(carving);
     // Small irregular pinholes and edge nicks vary from seed to seed.
@@ -204,9 +210,23 @@ function createInkSeed(index) {
         fleck.lineTo(x + size * .5, y + size * 2.1);
         fleck.lineTo(x - size * .7, y + size);
         fleck.closePath();
-        const chip = new THREE.Mesh(new THREE.ShapeGeometry(fleck), cutMaterial);
+        const chip = new THREE.Mesh(new THREE.ShapeGeometry(fleck), index === 1 ? readingCutMaterial : cutMaterial);
         chip.position.z = .0075;
         seed.add(chip);
+    }
+    if (index === 1) {
+        seed.userData.hasText = true;
+        // Same outline and size as before; UVs place the winding passage inside its face.
+        const face = new THREE.ShapeGeometry(silhouette, 12);
+        const positions = face.getAttribute('position');
+        const uv = face.getAttribute('uv');
+        for (let i = 0; i < positions.count; i++) {
+            uv.setXY(i, positions.getX(i) / .13 + .5, positions.getY(i) / .195 + .5);
+        }
+        const lettering = new THREE.Mesh(face, seedReadingMaterial);
+        lettering.position.z = .008;
+        seed.add(lettering);
+        ramblingSeed = seed;
     }
     return seed;
 }
@@ -282,9 +302,77 @@ let pointer = null;
 const zoomRaycaster = new THREE.Raycaster();
 const zoomPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const zoomWorldPoint = new THREE.Vector3();
+const zoomSurfaces = [];
+melon.traverse(child => {
+    if (child.isMesh && !child.material.transparent && child !== outline) zoomSurfaces.push(child);
+});
 let zoomAnchor = null;
+let seedFocus = null;
+let selectedSeed = null, returnView = null;
+function cancelSeedFocus() {
+    if (!seedFocus) return;
+    seedFocus = null;
+    targetZoom = zoom;
+}
+function seedAt(clientX, clientY) {
+    const bounds = renderer.domElement.getBoundingClientRect();
+    camera.updateMatrixWorld();
+    melon.updateWorldMatrix(true, true);
+    zoomRaycaster.setFromCamera(new THREE.Vector2(
+        (clientX - bounds.left) / bounds.width * 2 - 1,
+        1 - (clientY - bounds.top) / bounds.height * 2), camera);
+    // The nearest opaque surface must belong to a seed. The shell and flesh
+    // therefore prevent clicking a seed through the back of the watermelon.
+    const hit = zoomRaycaster.intersectObjects(zoomSurfaces, false)[0];
+    return hit?.object.parent?.userData.hasText ? hit.object.parent : null;
+}
+function focusSeed(seed) {
+    if (selectedSeed === seed && returnView) {
+        // Return to the actual view before opening this seed, including any
+        // rotation or cursor-centered zoom the reader had already chosen.
+        targetZoom = returnView.zoom;
+        targetProgress = returnView.pose[0];
+        zoomAnchor = null;
+        seedFocus = { mode: 'return', startTime: null, startZoom: zoom, endZoom: targetZoom,
+            startCamera: new THREE.Vector2(camera.position.x, camera.position.y),
+            endCamera: returnView.camera,
+            startPose: [progress, dragX, dragY, dragZ], endPose: returnView.pose };
+        selectedSeed = null;
+        returnView = null;
+        return;
+    }
+    selectedSeed = seed;
+    returnView = { zoom, camera: new THREE.Vector2(camera.position.x, camera.position.y),
+        pose: [progress, dragX, dragY, dragZ] };
+    melon.updateWorldMatrix(true, true);
+    camera.updateMatrixWorld();
+    const box = new THREE.Box3().setFromObject(seed, true);
+    const center = box.getCenter(new THREE.Vector3());
+    const screen = center.clone().project(camera);
+    const baseZ = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * .3;
+    const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    let magnification = Infinity;
+    for (const x of [box.min.x, box.max.x]) {
+        for (const y of [box.min.y, box.max.y]) {
+            for (const z of [box.min.z, box.max.z]) {
+                const halfHeight = (baseZ - z) * tangent;
+                magnification = Math.min(magnification,
+                    .8 * halfHeight * camera.aspect / Math.max(Math.abs(x - center.x), 1e-6),
+                    .8 * halfHeight / Math.max(Math.abs(y - center.y), 1e-6));
+            }
+        }
+    }
+    // Hold the current fruit angle while the camera approaches the chosen seed.
+    targetProgress = progress;
+    targetZoom = THREE.MathUtils.clamp(.3 / Math.max(1, magnification), .003, .3);
+    zoomAnchor = { screen: new THREE.Vector2(screen.x, screen.y),
+        point: melon.worldToLocal(center.clone()), onMelon: true };
+    seedFocus = { mode: 'enter', startTime: null, startZoom: zoom, endZoom: targetZoom,
+        screen: zoomAnchor.screen.clone() };
+}
 function changeZoom(delta, clientX, clientY) {
-    const nextZoom = THREE.MathUtils.clamp(targetZoom * Math.exp(-delta), .3, 2.4);
+    cancelSeedFocus();
+    const nextZoom = THREE.MathUtils.clamp(targetZoom * Math.exp(-delta), .003, 2.4);
     if (nextZoom === targetZoom) return;
     const bounds = renderer.domElement.getBoundingClientRect();
     const screen = new THREE.Vector2(
@@ -295,8 +383,7 @@ function changeZoom(delta, clientX, clientY) {
     zoomRaycaster.setFromCamera(screen, camera);
     // Ignore transparent lettering planes and the back-face outline: anchor
     // to the actual fruit surface, including when viewing the back.
-    const surfaces = melon.children.filter(child => child.isMesh && !child.material.transparent && child !== outline);
-    const hit = zoomRaycaster.intersectObjects(surfaces, false)[0];
+    const hit = zoomRaycaster.intersectObjects(zoomSurfaces, false)[0];
     if (hit) {
         zoomAnchor = { screen, point: melon.worldToLocal(hit.point.clone()), onMelon: true };
     } else {
@@ -304,13 +391,13 @@ function changeZoom(delta, clientX, clientY) {
         zoomAnchor = point ? { screen, point, onMelon: false } : null;
     }
     targetZoom = nextZoom;
-    targetProgress = reducedMotion ? 0 : -Math.log(targetZoom) * .65;
+    targetProgress = reducedMotion ? 0 : -Math.log(Math.max(targetZoom, .3)) * .65;
 }
 function keepZoomAnchor() {
     if (!zoomAnchor) return;
     zoomWorldPoint.copy(zoomAnchor.point);
     if (zoomAnchor.onMelon) melon.localToWorld(zoomWorldPoint);
-    const halfHeight = (camera.position.z - zoomWorldPoint.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const halfHeight = (camera.position.z - zoomWorldPoint.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom;
     // Shift the camera sideways as it approaches, keeping the chosen point
     // beneath the cursor throughout both eased zoom and scroll rotation.
     camera.position.x = zoomWorldPoint.x - zoomAnchor.screen.x * halfHeight * camera.aspect;
@@ -324,22 +411,41 @@ renderer.domElement.addEventListener('wheel', event => {
 }, { passive: false });
 renderer.domElement.addEventListener('pointerdown', event => {
     if (event.button !== 0 || pointer) return;
+    cancelSeedFocus();
+    const seed = seedAt(event.clientX, event.clientY);
     melon.updateWorldMatrix(true, false);
     const inverse = melon.matrixWorld.clone().invert();
     const face = pointerOnFace(camera, inverse, renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
     zoomAnchor = null;
     pointer = {
         id: event.pointerId, x: event.clientX, y: event.clientY,
-        mode: inSpinBand(face) ? 'spin' : 'turn', inverse,
+        startX: event.clientX, startY: event.clientY, moved: false, seed,
+        mode: zoom < .15 ? 'pan' : inSpinBand(face) ? 'spin' : 'turn', inverse,
+        planeZ: face ? melon.localToWorld(face.clone()).z : 0,
         angle: face ? Math.atan2(face.y, face.x) : 0
     };
     renderer.domElement.style.cursor = 'grabbing';
     renderer.domElement.setPointerCapture(event.pointerId);
 });
 renderer.domElement.addEventListener('pointermove', event => {
-    if (!pointer) return;
+    if (!pointer) {
+        if (event.pointerType !== 'touch') {
+            renderer.domElement.style.cursor = seedAt(event.clientX, event.clientY) ? 'pointer' : 'grab';
+        }
+        return;
+    }
     if (pointer.id !== event.pointerId) return;
-    if (pointer.mode === 'spin') {
+    if (!pointer.moved) {
+        if (Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY) < 6) return;
+        pointer.moved = true;
+    }
+    if (pointer.mode === 'pan') {
+        // Once inside a seed, drag across the writing without tumbling the fruit.
+        const unitsPerPixel = 2 * (camera.position.z - pointer.planeZ)
+            * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom / mount.clientHeight;
+        camera.position.x -= (event.clientX - pointer.x) * unitsPerPixel;
+        camera.position.y += (event.clientY - pointer.y) * unitsPerPixel;
+    } else if (pointer.mode === 'spin') {
         // Use the face orientation at grab time, so its own rotation does not
         // feed back into the drag angle. Capture keeps the gesture continuous.
         const face = pointerOnFace(camera, pointer.inverse, renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
@@ -355,13 +461,26 @@ renderer.domElement.addEventListener('pointermove', event => {
     pointer.x = event.clientX;
     pointer.y = event.clientY;
 });
-for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    renderer.domElement.addEventListener(event, () => {
+renderer.domElement.addEventListener('pointerup', event => {
+    if (!pointer || pointer.id !== event.pointerId) return;
+    const pressed = pointer;
+    pointer = null;
+    const seed = seedAt(event.clientX, event.clientY);
+    const click = !pressed.moved
+        && Math.hypot(event.clientX - pressed.startX, event.clientY - pressed.startY) < 6;
+    if (click && seed && seed === pressed.seed) focusSeed(seed);
+    renderer.domElement.style.cursor = seed ? 'pointer' : 'grab';
+    if (renderer.domElement.hasPointerCapture(event.pointerId)) renderer.domElement.releasePointerCapture(event.pointerId);
+});
+for (const event of ['pointercancel', 'lostpointercapture']) {
+    renderer.domElement.addEventListener(event, event => {
+        if (!pointer || pointer.id !== event.pointerId) return;
         pointer = null;
         renderer.domElement.style.cursor = 'grab';
     });
 }
 function resize() {
+    cancelSeedFocus();
     zoomAnchor = null;
     const width = mount.clientWidth, height = mount.clientHeight;
     renderer.setSize(width, height);
@@ -371,12 +490,46 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 let firstFrame = true;
+const seedTop = new THREE.Vector3(), seedBottom = new THREE.Vector3();
 renderer.setAnimationLoop(time => {
-    progress += (targetProgress - progress) * .065;
+    const returning = seedFocus?.mode === 'return';
+    if (seedFocus) {
+        seedFocus.startTime ??= time;
+        const t = reducedMotion ? 1 : Math.min(1, (time - seedFocus.startTime) / 950);
+        const eased = t * t * (3 - 2 * t);
+        zoom = Math.exp(THREE.MathUtils.lerp(Math.log(seedFocus.startZoom), Math.log(seedFocus.endZoom), eased));
+        if (returning) {
+            camera.position.x = THREE.MathUtils.lerp(seedFocus.startCamera.x, seedFocus.endCamera.x, eased);
+            camera.position.y = THREE.MathUtils.lerp(seedFocus.startCamera.y, seedFocus.endCamera.y, eased);
+            [progress, dragX, dragY, dragZ] = seedFocus.startPose.map((value, i) =>
+                THREE.MathUtils.lerp(value, seedFocus.endPose[i], eased));
+        } else {
+            zoomAnchor.screen.copy(seedFocus.screen).multiplyScalar(1 - eased);
+        }
+        if (t === 1) seedFocus = null;
+    } else {
+        zoom += (targetZoom - zoom) * (reducedMotion ? 1 : .09);
+    }
+    if (!returning) progress += (targetProgress - progress) * .065;
     melon.rotation.set(.26 + dragY, -.72 + progress * .52 + dragX, -.16 + progress * .3 + dragZ);
-    zoom += (targetZoom - zoom) * (reducedMotion ? 1 : .09);
-    camera.position.z = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * zoom;
+    // Continue optically beyond the old dolly limit, so the camera never cuts
+    // through the fruit when magnifying tiny drawn letters.
+    camera.position.z = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * Math.max(zoom, .3);
+    const magnification = Math.max(1, .3 / zoom);
+    if (camera.zoom !== magnification) {
+        camera.zoom = magnification;
+        camera.updateProjectionMatrix();
+    }
     keepZoomAnchor();
+    camera.updateMatrixWorld();
+    ramblingSeed.updateWorldMatrix(true, false);
+    seedTop.set(0, .078, .008).applyMatrix4(ramblingSeed.matrixWorld).project(camera);
+    seedBottom.set(0, -.078, .008).applyMatrix4(ramblingSeed.matrixWorld).project(camera);
+    const seedPixels = Math.hypot((seedTop.x - seedBottom.x) * mount.clientWidth,
+        (seedTop.y - seedBottom.y) * mount.clientHeight) / 2;
+    const reading = THREE.MathUtils.smoothstep(seedPixels, 35, 130);
+    seedReadingMaterial.opacity = reading;
+    readingCutMaterial.opacity = 1 - reading;
     rustleShadowInk(time);
     renderer.render(scene, camera);
     if (firstFrame) {

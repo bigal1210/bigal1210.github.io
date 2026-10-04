@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Bake seed rambling</title>
+<style>canvas{display:block;max-height:85vh;max-width:90vw;background:#242424;margin:20px auto}</style>
+<button id="bake">Save seed rambling</button><pre id="status">Ready to draw the entire passage into one seed.</pre>
+<script type="module">
+import { generateSeedArtwork } from './seed-artwork.js?v=seed-phrases-2';
+document.querySelector('#bake').onclick = async () => {
+    const status = document.querySelector('#status');
+    try {
+        const art = generateSeedArtwork();
+        document.querySelector('canvas')?.remove();
+        document.body.append(art.canvas);
+        const blob = await new Promise(resolve => art.canvas.toBlob(resolve, 'image/png'));
+        const response = await fetch('/__bake/seed-flow', { method: 'POST', body: blob });
+        if (!response.ok) throw new Error('Could not save seed texture');
+        status.textContent = `Saved ${art.characters} characters in ${art.phrases} flowing phrases, at scale ${art.scale.toFixed(3)}. Only seed-flow.png changed.`;
+    } catch (error) { status.textContent = error.stack; }
+};
+</script></html>

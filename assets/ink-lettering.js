@@ -32,6 +32,13 @@ const letters = {
     N: [66, [[[11,90],[12,14],[28,40],[53,87],[56,12]]]],
     S: [59, [[[51,23],[40,12],[22,14],[11,27],[16,42],[35,52],[49,65],[46,82],[29,91],[11,81]]]],
     D: [66, [[[12,88],[13,14]],[[13,14],[35,13],[53,28],[59,51],[53,75],[36,88],[12,88]]]],
+    Y: [59, [[[7,14],[30,49],[53,12]],[[30,49],[27,89]]]],
+    P: [57, [[[12,90],[13,14]],[[13,15],[37,12],[49,24],[45,44],[27,51],[13,48]]]],
+    L: [53, [[[14,12],[12,88],[47,86]]]],
+    H: [65, [[[12,13],[11,89]],[[54,12],[52,90]],[[12,51],[53,48]]]],
+    ',': [23, [[[13,84],[14,91],[8,104]]]],
+    '’': [23, [[[14,12],[13,22],[8,29]]]],
+    '-': [35, [[[6,59],[29,57]]]],
     '.': [23, [[[11,86],[13,89]]]],
     '?': [49, [[[7,25],[18,13],[35,14],[43,26],[38,40],[24,51],[23,64]],[[23,85],[25,88]]]],
     ' ': [28, []]
@@ -58,6 +65,9 @@ function widthFor(character, index) {
 }
 export function measureInkPassage(text) {
     return Array.from(text).reduce((total, char, i) => total + widthFor(char, i), 0);
+}
+export function measureInkCharacter(character, index) {
+    return widthFor(character, index);
 }
 // Mostly straight pen movements preserve the corners of quick handwriting.
 function penPath(ctx, points, seed, pressure = 3.1) {
@@ -157,9 +167,10 @@ function penPath(ctx, points, seed, pressure = 3.1) {
     }
     ctx.restore();
 }
-export function drawInkPassage(ctx, text, x, baseline, scale) {
+export function drawInkPassage(ctx, text, x, baseline, scale, indexOffset = 0) {
     let cursor = x;
-    Array.from(text).forEach((character, index) => {
+    Array.from(text).forEach((character, position) => {
+        const index = position + indexOffset;
         const glyph = glyphFor(character);
         const size = letterSize(index);
         ctx.save();

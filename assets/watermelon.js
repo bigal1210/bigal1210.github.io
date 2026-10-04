@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three/three.module.js';
 import { firstRambling } from './ramblings.js';
 import { seedRandomState } from './textures/artwork-state.js';
+import { inSpinBand, pointerOnFace, angleStep } from './watermelon-spin.js';
 
 const mount = document.querySelector('#scene');
 let renderer;
@@ -275,7 +276,7 @@ function rustleShadowInk(time) {
 }
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let progress = 0, targetProgress = 0, dragX = 0, dragY = 0;
+let progress = 0, targetProgress = 0, dragX = 0, dragY = 0, dragZ = 0;
 let zoom = 1, targetZoom = 1;
 let pointer = null;
 const zoomRaycaster = new THREE.Raycaster();
@@ -322,19 +323,50 @@ renderer.domElement.addEventListener('wheel', event => {
     changeZoom(delta * (event.ctrlKey ? .004 : .0018), event.clientX, event.clientY);
 }, { passive: false });
 renderer.domElement.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || pointer) return;
+    melon.updateWorldMatrix(true, false);
+    const inverse = melon.matrixWorld.clone().invert();
+    const face = pointerOnFace(camera, inverse, renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
     zoomAnchor = null;
-    pointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    pointer = {
+        id: event.pointerId, x: event.clientX, y: event.clientY,
+        mode: inSpinBand(face) ? 'spin' : 'turn', inverse,
+        angle: face ? Math.atan2(face.y, face.x) : 0
+    };
+    renderer.domElement.style.cursor = 'grabbing';
     renderer.domElement.setPointerCapture(event.pointerId);
 });
 renderer.domElement.addEventListener('pointermove', event => {
-    if (!pointer || pointer.id !== event.pointerId) return;
-    dragX += (event.clientX - pointer.x) * .004;
-    dragY += (event.clientY - pointer.y) * .003;
+    if (!pointer) {
+        melon.updateWorldMatrix(true, false);
+        const face = pointerOnFace(camera, melon.matrixWorld.clone().invert(), renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
+        document.querySelector('.hint').textContent = inSpinBand(face)
+            ? 'drag around the rind to spin · scroll to look closer'
+            : 'drag to turn · drag the rind to spin · scroll to look closer';
+        return;
+    }
+    if (pointer.id !== event.pointerId) return;
+    if (pointer.mode === 'spin') {
+        // Use the face orientation at grab time, so its own rotation does not
+        // feed back into the drag angle. Capture keeps the gesture continuous.
+        const face = pointerOnFace(camera, pointer.inverse, renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
+        if (face && Math.hypot(face.x, face.y) > .2) {
+            const angle = Math.atan2(face.y, face.x);
+            dragZ += angleStep(pointer.angle, angle);
+            pointer.angle = angle;
+        }
+    } else {
+        dragX += (event.clientX - pointer.x) * .004;
+        dragY += (event.clientY - pointer.y) * .003;
+    }
     pointer.x = event.clientX;
     pointer.y = event.clientY;
 });
 for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    renderer.domElement.addEventListener(event, () => { pointer = null; });
+    renderer.domElement.addEventListener(event, () => {
+        pointer = null;
+        renderer.domElement.style.cursor = 'grab';
+    });
 }
 function resize() {
     zoomAnchor = null;
@@ -348,7 +380,7 @@ resize();
 let firstFrame = true;
 renderer.setAnimationLoop(time => {
     progress += (targetProgress - progress) * .065;
-    melon.rotation.set(.26 + dragY, -.72 + progress * .52 + dragX, -.16 + progress * .3);
+    melon.rotation.set(.26 + dragY, -.72 + progress * .52 + dragX, -.16 + progress * .3 + dragZ);
     zoom += (targetZoom - zoom) * (reducedMotion ? 1 : .09);
     camera.position.z = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * zoom;
     keepZoomAnchor();

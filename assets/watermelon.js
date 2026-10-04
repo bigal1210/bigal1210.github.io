@@ -337,14 +337,7 @@ renderer.domElement.addEventListener('pointerdown', event => {
     renderer.domElement.setPointerCapture(event.pointerId);
 });
 renderer.domElement.addEventListener('pointermove', event => {
-    if (!pointer) {
-        melon.updateWorldMatrix(true, false);
-        const face = pointerOnFace(camera, melon.matrixWorld.clone().invert(), renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
-        document.querySelector('.hint').textContent = inSpinBand(face)
-            ? 'drag around the rind to spin · scroll to look closer'
-            : 'drag to turn · drag the rind to spin · scroll to look closer';
-        return;
-    }
+    if (!pointer) return;
     if (pointer.id !== event.pointerId) return;
     if (pointer.mode === 'spin') {
         // Use the face orientation at grab time, so its own rotation does not

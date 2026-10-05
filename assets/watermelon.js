@@ -1,4 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
+import { createBaseball } from './baseball.js?v=2';
 import { firstRambling, flowRambling } from './ramblings.js?v=seed-spiral-1';
 import { seedRandomState } from './textures/artwork-state.js';
 import { inSpinBand, pointerOnFace, angleStep } from './watermelon-spin.js';
@@ -69,6 +70,10 @@ const [rindTexture, fleshTexture, writingTexture, seedWritingTexture] = await Pr
 const melon = new THREE.Group();
 melon.scale.set(1.13, 1, .91);
 scene.add(melon);
+const baseball = createBaseball();
+scene.add(baseball.object, baseball.shadow);
+baseball.object.visible = false;
+baseball.shadow.visible = false;
 const radius = 1.9;
 const shellGeometry = new THREE.SphereGeometry(radius, 128, 64, 0, Math.PI * 2, 0, Math.PI / 2);
 shellGeometry.rotateX(-Math.PI / 2);
@@ -261,11 +266,12 @@ const shadowTexture = textureFromCanvas((ctx, size) => {
 const shadow = new THREE.Mesh(new THREE.PlaneGeometry(5, .6), new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
 shadow.position.set(.1, -2, -.8);
 scene.add(shadow);
+shadow.visible = true;
 const shadowContext = shadowTexture.image.getContext('2d');
 let previousInkRotation = new THREE.Vector3(.26, -.72, -.16);
 let lastInkTime = 0, breezeTime = 0, rustleEnergy = 0;
 function rustleShadowInk(time) {
-    if (reducedMotion) return;
+    if (reducedMotion || !shadow.visible) return;
     const dt = lastInkTime ? Math.min((time - lastInkTime) / 1000, .05) : 1 / 60;
     lastInkTime = time;
     const movement = Math.abs(melon.rotation.x - previousInkRotation.x)
@@ -306,6 +312,63 @@ const zoomSurfaces = [];
 melon.traverse(child => {
     if (child.isMesh && !child.material.transparent && child !== outline) zoomSurfaces.push(child);
 });
+let activeObject = 0;
+const objectNames = ['Watermelon', 'Baseball'];
+const objectNav = document.querySelector('#object-nav');
+const objectStatus = document.querySelector('#object-status');
+const previousObject = document.querySelector('#previous-object');
+const nextObject = document.querySelector('#next-object');
+function activeSurfaces() {
+    return activeObject === 0 ? zoomSurfaces : [baseball.shell];
+}
+function updateObjectDescription() {
+    const isMelon = activeObject === 0;
+    mount.dataset.object = objectNames[activeObject].toLowerCase();
+    mount.setAttribute('aria-label', isMelon
+        ? 'A black-and-white sketch of a cut watermelon. Click a text seed to zoom in or back out. Drag to turn, drag the band outside the words to spin the face, or scroll to zoom.'
+        : 'A black-and-white sketch of a stitched baseball. Drag to turn or scroll to zoom.');
+    if (isMelon) mount.setAttribute('aria-describedby', 'rambling-text');
+    else mount.removeAttribute('aria-describedby');
+    document.querySelector('#rambling-text').hidden = !isMelon;
+    document.querySelector('.hint').textContent = isMelon
+        ? 'drag to turn · scroll to zoom'
+        : 'drag to turn · scroll to zoom';
+    objectStatus.textContent = `${objectNames[activeObject]}, ${activeObject + 1} of ${objectNames.length}`;
+    previousObject.setAttribute('aria-label', `Previous object: ${objectNames[(activeObject + objectNames.length - 1) % objectNames.length]}`);
+    nextObject.setAttribute('aria-label', `Next object: ${objectNames[(activeObject + 1) % objectNames.length]}`);
+}
+let switchAnimation;
+function switchObject(direction) {
+    if (pointer) {
+        const pointerId = pointer.id;
+        pointer = null;
+        if (renderer.domElement.hasPointerCapture(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
+    }
+    activeObject = (activeObject + direction + objectNames.length) % objectNames.length;
+    melon.visible = shadow.visible = activeObject === 0;
+    baseball.object.visible = baseball.shadow.visible = activeObject === 1;
+    seedFocus = zoomAnchor = selectedSeed = returnView = null;
+    zoom = targetZoom = 1;
+    progress = targetProgress = 0;
+    camera.position.set(0, 0, overviewDistance());
+    camera.zoom = 1;
+    camera.updateProjectionMatrix();
+    renderer.domElement.style.cursor = 'grab';
+    updateObjectDescription();
+    switchAnimation?.cancel();
+    if (!reducedMotion) switchAnimation = renderer.domElement.animate(
+        [{ opacity: .15 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
+}
+previousObject.addEventListener('click', () => switchObject(-1));
+nextObject.addEventListener('click', () => switchObject(1));
+document.addEventListener('keydown', event => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
+        || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    switchObject(event.key === 'ArrowLeft' ? -1 : 1);
+});
+updateObjectDescription();
 let zoomAnchor = null;
 let seedFocus = null;
 let selectedSeed = null, returnView = null;
@@ -314,17 +377,26 @@ function cancelSeedFocus() {
     seedFocus = null;
     targetZoom = zoom;
 }
-function seedAt(clientX, clientY) {
+function surfaceAt(clientX, clientY) {
     const bounds = renderer.domElement.getBoundingClientRect();
     camera.updateMatrixWorld();
     melon.updateWorldMatrix(true, true);
+    baseball.object.updateWorldMatrix(true, true);
     zoomRaycaster.setFromCamera(new THREE.Vector2(
         (clientX - bounds.left) / bounds.width * 2 - 1,
         1 - (clientY - bounds.top) / bounds.height * 2), camera);
     // The nearest opaque surface must belong to a seed. The shell and flesh
     // therefore prevent clicking a seed through the back of the watermelon.
-    const hit = zoomRaycaster.intersectObjects(zoomSurfaces, false)[0];
+    const hit = zoomRaycaster.intersectObjects(activeSurfaces(), false)[0];
+    return hit;
+}
+function seedAt(clientX, clientY) {
+    const hit = surfaceAt(clientX, clientY);
     return hit?.object.parent?.userData.hasText ? hit.object.parent : null;
+}
+function overviewDistance() {
+    const distance = activeObject === 0 ? 8.7 : 6.3;
+    return camera.aspect < 1 ? distance / camera.aspect : distance;
 }
 function focusSeed(seed) {
     if (selectedSeed === seed && returnView) {
@@ -349,7 +421,7 @@ function focusSeed(seed) {
     const box = new THREE.Box3().setFromObject(seed, true);
     const center = box.getCenter(new THREE.Vector3());
     const screen = center.clone().project(camera);
-    const baseZ = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * .3;
+    const baseZ = overviewDistance() * .3;
     const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     let magnification = Infinity;
     for (const x of [box.min.x, box.max.x]) {
@@ -366,7 +438,7 @@ function focusSeed(seed) {
     targetProgress = progress;
     targetZoom = THREE.MathUtils.clamp(.3 / Math.max(1, magnification), .003, .3);
     zoomAnchor = { screen: new THREE.Vector2(screen.x, screen.y),
-        point: melon.worldToLocal(center.clone()), onMelon: true };
+        point: melon.worldToLocal(center.clone()), object: melon };
     seedFocus = { mode: 'enter', startTime: null, startZoom: zoom, endZoom: targetZoom,
         screen: zoomAnchor.screen.clone() };
 }
@@ -380,23 +452,26 @@ function changeZoom(delta, clientX, clientY) {
         1 - (clientY - bounds.top) / bounds.height * 2);
     camera.updateMatrixWorld();
     melon.updateWorldMatrix(true, true);
+    baseball.object.updateWorldMatrix(true, true);
     zoomRaycaster.setFromCamera(screen, camera);
     // Ignore transparent lettering planes and the back-face outline: anchor
     // to the actual fruit surface, including when viewing the back.
-    const hit = zoomRaycaster.intersectObjects(zoomSurfaces, false)[0];
+    const hit = zoomRaycaster.intersectObjects(activeSurfaces(), false)[0];
     if (hit) {
-        zoomAnchor = { screen, point: melon.worldToLocal(hit.point.clone()), onMelon: true };
+        const object = hit.object === baseball.shell ? baseball.object : melon;
+        zoomAnchor = { screen, point: object.worldToLocal(hit.point.clone()), object };
     } else {
         const point = zoomRaycaster.ray.intersectPlane(zoomPlane, new THREE.Vector3());
-        zoomAnchor = point ? { screen, point, onMelon: false } : null;
+        zoomAnchor = point ? { screen, point, object: null } : null;
     }
     targetZoom = nextZoom;
-    targetProgress = reducedMotion ? 0 : -Math.log(Math.max(targetZoom, .3)) * .65;
+    targetProgress = activeObject === 1 ? progress
+        : reducedMotion ? 0 : -Math.log(Math.max(targetZoom, .3)) * .65;
 }
 function keepZoomAnchor() {
     if (!zoomAnchor) return;
     zoomWorldPoint.copy(zoomAnchor.point);
-    if (zoomAnchor.onMelon) melon.localToWorld(zoomWorldPoint);
+    if (zoomAnchor.object) zoomAnchor.object.localToWorld(zoomWorldPoint);
     const halfHeight = (camera.position.z - zoomWorldPoint.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom;
     // Shift the camera sideways as it approaches, keeping the chosen point
     // beneath the cursor throughout both eased zoom and scroll rotation.
@@ -412,7 +487,9 @@ renderer.domElement.addEventListener('wheel', event => {
 renderer.domElement.addEventListener('pointerdown', event => {
     if (event.button !== 0 || pointer) return;
     cancelSeedFocus();
-    const seed = seedAt(event.clientX, event.clientY);
+    const hit = surfaceAt(event.clientX, event.clientY);
+    const onBaseball = activeObject === 1;
+    const seed = hit?.object.parent?.userData.hasText ? hit.object.parent : null;
     melon.updateWorldMatrix(true, false);
     const inverse = melon.matrixWorld.clone().invert();
     const face = pointerOnFace(camera, inverse, renderer.domElement.getBoundingClientRect(), event.clientX, event.clientY);
@@ -420,8 +497,8 @@ renderer.domElement.addEventListener('pointerdown', event => {
     pointer = {
         id: event.pointerId, x: event.clientX, y: event.clientY,
         startX: event.clientX, startY: event.clientY, moved: false, seed,
-        mode: zoom < .15 ? 'pan' : inSpinBand(face) ? 'spin' : 'turn', inverse,
-        planeZ: face ? melon.localToWorld(face.clone()).z : 0,
+        mode: zoom < .15 ? 'pan' : onBaseball ? 'baseball' : inSpinBand(face) ? 'spin' : 'turn', inverse,
+        planeZ: hit ? hit.point.z : face ? melon.localToWorld(face.clone()).z : 0,
         angle: face ? Math.atan2(face.y, face.x) : 0
     };
     renderer.domElement.style.cursor = 'grabbing';
@@ -445,6 +522,9 @@ renderer.domElement.addEventListener('pointermove', event => {
             * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / camera.zoom / mount.clientHeight;
         camera.position.x -= (event.clientX - pointer.x) * unitsPerPixel;
         camera.position.y += (event.clientY - pointer.y) * unitsPerPixel;
+    } else if (pointer.mode === 'baseball') {
+        baseball.object.rotation.y += (event.clientX - pointer.x) * .006;
+        baseball.object.rotation.x += (event.clientY - pointer.y) * .006;
     } else if (pointer.mode === 'spin') {
         // Use the face orientation at grab time, so its own rotation does not
         // feed back into the drag angle. Capture keeps the gesture continuous.
@@ -485,6 +565,10 @@ function resize() {
     const width = mount.clientWidth, height = mount.clientHeight;
     renderer.setSize(width, height);
     camera.aspect = width / height;
+    melon.position.set(0, 0, 0);
+    baseball.object.position.set(0, 0, 0);
+    shadow.position.set(.1, -2, -.8);
+    baseball.shadow.position.set(.05, -baseball.radius - .03, -.45);
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
@@ -514,7 +598,7 @@ renderer.setAnimationLoop(time => {
     melon.rotation.set(.26 + dragY, -.72 + progress * .52 + dragX, -.16 + progress * .3 + dragZ);
     // Continue optically beyond the old dolly limit, so the camera never cuts
     // through the fruit when magnifying tiny drawn letters.
-    camera.position.z = (camera.aspect < 1 ? 8.7 / camera.aspect : 8.7) * Math.max(zoom, .3);
+    camera.position.z = overviewDistance() * Math.max(zoom, .3);
     const magnification = Math.max(1, .3 / zoom);
     if (camera.zoom !== magnification) {
         camera.zoom = magnification;
@@ -535,6 +619,7 @@ renderer.setAnimationLoop(time => {
     if (firstFrame) {
         firstFrame = false;
         document.querySelector('#loading').hidden = true;
+        objectNav.hidden = false;
         mount.dataset.ready = 'true';
         performance.mark('watermelon-ready');
         const start = performance.getEntriesByName('watermelon-start')[0];

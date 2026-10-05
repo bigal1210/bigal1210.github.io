@@ -20,18 +20,28 @@
         canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
         canvas:active { cursor: grabbing; }
         .hint { position: fixed; bottom: 28px; width: 100%; margin: 0; text-align: center; font-size: 11px; letter-spacing: .06em; color: #777777; pointer-events: none; }
+        #object-nav button { position: fixed; z-index: 3; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; padding: 4px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+        #object-nav button:hover { text-decoration: underline; }
+        #object-nav button:focus-visible { outline: 1px dashed currentColor; outline-offset: 2px; }
+        #previous-object { left: 32px; }
+        #next-object { right: 32px; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: pre-line; }
         #fallback, #loading { position: absolute; top: 45%; width: 100%; text-align: center; padding: 24px; }
         #loading { color: #777777; font-size: 12px; }
-        @media (max-width: 600px) { header { top: 24px; left: 22px; right: 22px; } }
+        @media (max-width: 600px) { header { top: 24px; left: 22px; right: 22px; } #previous-object { left: 6px; } #next-object { right: 6px; } .hint { padding: 0 24px; font-size: 10px; } }
         @media (prefers-reduced-motion: reduce) { main { height: 100vh; } }
     </style>
 </head>
 <body>
     <header><a href="Main.html">← Alexander Atalla</a><h1>Ramblings</h1></header>
-    <main><div id="scene" role="img" aria-describedby="rambling-text" aria-label="A black-and-white woodcut-style watermelon, with bold ink stripes, carved white marks, and irregular hatched shading. Click a seed containing text to zoom into it; click it again to return to the previous view. Drag to turn it, drag the band between the lettering and the outer edge to spin the face, or scroll to look closer."><p id="loading" role="status">Loading watermelon…</p><p id="fallback" role="alert" hidden>The watermelon couldn’t load. <a href="nothinghereyet.html">Try again</a>, or try a browser with WebGL enabled.</p></div></main>
+    <main><div id="scene" role="img" aria-describedby="rambling-text" aria-label="A black-and-white sketch of a cut watermelon. Click a seed containing text to zoom into it; click it again to return to the previous view. Drag to turn it, drag the band between the lettering and the outer edge to spin the face, or scroll to look closer."><p id="loading" role="status">Loading objects…</p><p id="fallback" role="alert" hidden>The objects couldn’t load. <a href="nothinghereyet.html">Try again</a>, or try a browser with WebGL enabled.</p></div></main>
+    <nav id="object-nav" aria-label="Browse objects" hidden>
+        <button id="previous-object" type="button" aria-label="Previous object: Baseball"><span aria-hidden="true">←</span></button>
+        <button id="next-object" type="button" aria-label="Next object: Baseball"><span aria-hidden="true">→</span></button>
+    </nav>
+    <p id="object-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     <p id="rambling-text" class="sr-only"></p>
-    <p class="hint">click a text seed to zoom in/out · drag to turn · scroll to zoom</p>
-    <script type="module" src="assets/ramblings-page.js?v=seed-toggle-1"></script>
+    <p class="hint">drag to turn · scroll to zoom</p>
+    <script type="module" src="assets/ramblings-page.js?v=gallery-1"></script>
 </body>
 </html>

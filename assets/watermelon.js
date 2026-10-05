@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three/three.module.js';
-import { createBaseball } from './baseball.js?v=2';
-import { firstRambling, flowRambling } from './ramblings.js?v=seed-spiral-1';
+import { measureInkPassage } from './ink-lettering.js';
+import { createBaseball } from './baseball.js?v=smooth-both-openings-1';
+import { firstRambling, flowRambling, baseballRambling } from './ramblings.js?v=baseball-writing-1';
 import { seedRandomState } from './textures/artwork-state.js';
 import { inSpinBand, pointerOnFace, angleStep } from './watermelon-spin.js';
 
@@ -59,18 +60,18 @@ function stroke(ctx, points, opacity, width = 1, color = '28,28,28') {
 // Artwork is baked once with tools/bake-watermelon.py, not redrawn on visits.
 const loader = new THREE.TextureLoader();
 async function loadArtwork(name) {
-    const texture = await loader.loadAsync(new URL(`./textures/${name}.png${name === 'seed-flow' ? '?v=phrases-2' : ''}`, import.meta.url).href);
+    const texture = await loader.loadAsync(globalThis.__ramblingsArtwork?.[name] ?? new URL(`./textures/${name}.png${name === 'seed-flow' ? '?v=phrases-2' : name === 'baseball-marks' ? '?v=amadou-caps-1' : name === 'baseball-writing' ? '?v=smooth-both-openings-1' : ''}`, import.meta.url).href);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return texture;
 }
-const [rindTexture, fleshTexture, writingTexture, seedWritingTexture] = await Promise.all(
-    ['rind', 'flesh', 'writing', 'seed-flow'].map(loadArtwork));
+const [rindTexture, fleshTexture, writingTexture, seedWritingTexture, baseballWritingTexture, baseballMarksTexture] = await Promise.all(
+    ['rind', 'flesh', 'writing', 'seed-flow', 'baseball-writing', 'baseball-marks'].map(loadArtwork));
 
 const melon = new THREE.Group();
 melon.scale.set(1.13, 1, .91);
 scene.add(melon);
-const baseball = createBaseball();
+const baseball = createBaseball(baseballWritingTexture, baseballMarksTexture);
 scene.add(baseball.object, baseball.shadow);
 baseball.object.visible = false;
 baseball.shadow.visible = false;
@@ -93,11 +94,45 @@ melon.add(flesh);
 
 // Lettering lies on the exposed flesh and shares the watermelon's transform.
 document.querySelector('#rambling-text').textContent = [...firstRambling, ...flowRambling].join('\n\n');
+document.querySelector('#baseball-text').textContent = baseballRambling.map(text => text.replace(/^\./, '')).join('\n\n');
 const writingPlaneSize = 3.8;
 const writingMaterial = new THREE.MeshBasicMaterial({ map: writingTexture, transparent: true, depthWrite: false });
 const writing = new THREE.Mesh(new THREE.PlaneGeometry(writingPlaneSize, writingPlaneSize), writingMaterial);
 writing.position.z = .018;
+// Place the opening words at twelve o'clock in the initial view. Rotate just
+// the lettering, preserving the fruit, seeds, and their interaction geometry.
+writing.rotation.z = .62;
 melon.add(writing);
+
+// A pressure-varying ink stroke under the opening phrase, on the same face
+// and transform as the drawn letters. Keep the original wording intact.
+const openingWords = 'I had sex with a prostitute';
+const underlineArc = (Math.PI * 2 - .15)
+    * measureInkPassage(openingWords) / measureInkPassage(firstRambling.join('   '));
+const underlinePositions = [], underlineIndices = [];
+const underlineSteps = 220;
+for (let i = 0; i <= underlineSteps; i++) {
+    const t = i / underlineSteps;
+    const angle = Math.PI / 2 - .075 - t * underlineArc;
+    const r = 1.671 + .002 * Math.sin(t * 11) + .0008 * Math.sin(t * 87);
+    const taper = Math.min(1, t * 28, (1 - t) * 22);
+    const width = (.0055 + .0018 * Math.sin(t * 19) + .0007 * Math.sin(t * 137)) * taper;
+    for (const side of [-1, 1]) {
+        underlinePositions.push(Math.cos(angle) * (r + side * width / 2),
+            Math.sin(angle) * (r + side * width / 2), .004);
+    }
+    // Tiny interruptions in the ink match the broken strokes in the lettering.
+    if (i < underlineSteps && !(t > .39 && t < .397) && !(t > .79 && t < .794)) {
+        const k = i * 2;
+        underlineIndices.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+    }
+}
+const underlineGeometry = new THREE.BufferGeometry();
+underlineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(underlinePositions, 3));
+underlineGeometry.setIndex(underlineIndices);
+writing.add(new THREE.Mesh(underlineGeometry, new THREE.MeshBasicMaterial({
+    color: 0x242424, side: THREE.DoubleSide, transparent: true, depthWrite: false
+})));
 
 // The fruit stays round. Only the ink varies: thick pools, thin strokes,
 // occasional breaks, and white cuts through the black edge.
@@ -312,8 +347,24 @@ const zoomSurfaces = [];
 melon.traverse(child => {
     if (child.isMesh && !child.material.transparent && child !== outline) zoomSurfaces.push(child);
 });
-let activeObject = 0;
 const objectNames = ['Watermelon', 'Baseball'];
+const objectSlugs = ['watermelon', 'baseball'];
+function objectFromURL() {
+    const params = new URL(location.href).searchParams;
+    // Keep earlier local baseball-preview links working as object links.
+    const slug = params.get('object') ?? (params.get('preview') === 'baseball-writing' ? 'baseball' : 'watermelon');
+    const index = objectSlugs.indexOf(slug);
+    return index < 0 ? 0 : index;
+}
+function updateObjectURL(method) {
+    const url = new URL(location.href);
+    url.searchParams.set('object', objectSlugs[activeObject]);
+    if (url.searchParams.get('preview') === 'baseball-writing') url.searchParams.delete('preview');
+    if (url.href !== location.href) history[method](null, '', url);
+}
+let activeObject = objectFromURL();
+melon.visible = shadow.visible = activeObject === 0;
+baseball.object.visible = baseball.shadow.visible = activeObject === 1;
 const objectNav = document.querySelector('#object-nav');
 const objectStatus = document.querySelector('#object-status');
 const previousObject = document.querySelector('#previous-object');
@@ -322,14 +373,16 @@ function activeSurfaces() {
     return activeObject === 0 ? zoomSurfaces : [baseball.shell];
 }
 function updateObjectDescription() {
+    document.title = `${objectNames[activeObject]} — Ramblings — Alexander Atalla`;
     const isMelon = activeObject === 0;
     mount.dataset.object = objectNames[activeObject].toLowerCase();
     mount.setAttribute('aria-label', isMelon
         ? 'A black-and-white sketch of a cut watermelon. Click a text seed to zoom in or back out. Drag to turn, drag the band outside the words to spin the face, or scroll to zoom.'
-        : 'A black-and-white sketch of a stitched baseball. Drag to turn or scroll to zoom.');
+        : 'A black-and-white leather baseball marked Rawlings, Official, and Amadou Barry Quote with the MLB batter logo. Handwritten words replace the stitches along its seams. Drag to turn or scroll to read the writing up close.');
     if (isMelon) mount.setAttribute('aria-describedby', 'rambling-text');
-    else mount.removeAttribute('aria-describedby');
+    else mount.setAttribute('aria-describedby', 'baseball-text');
     document.querySelector('#rambling-text').hidden = !isMelon;
+    document.querySelector('#baseball-text').hidden = isMelon;
     document.querySelector('.hint').textContent = isMelon
         ? 'drag to turn · scroll to zoom'
         : 'drag to turn · scroll to zoom';
@@ -338,13 +391,15 @@ function updateObjectDescription() {
     nextObject.setAttribute('aria-label', `Next object: ${objectNames[(activeObject + 1) % objectNames.length]}`);
 }
 let switchAnimation;
-function switchObject(direction) {
+function showObject(index, writeHistory = true) {
+    if (index === activeObject) return;
     if (pointer) {
         const pointerId = pointer.id;
         pointer = null;
         if (renderer.domElement.hasPointerCapture(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
     }
-    activeObject = (activeObject + direction + objectNames.length) % objectNames.length;
+    activeObject = index;
+    if (writeHistory) updateObjectURL('pushState');
     melon.visible = shadow.visible = activeObject === 0;
     baseball.object.visible = baseball.shadow.visible = activeObject === 1;
     seedFocus = zoomAnchor = selectedSeed = returnView = null;
@@ -359,6 +414,10 @@ function switchObject(direction) {
     if (!reducedMotion) switchAnimation = renderer.domElement.animate(
         [{ opacity: .15 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
 }
+function switchObject(direction) {
+    showObject((activeObject + direction + objectNames.length) % objectNames.length);
+}
+window.addEventListener('popstate', () => showObject(objectFromURL(), false));
 previousObject.addEventListener('click', () => switchObject(-1));
 nextObject.addEventListener('click', () => switchObject(1));
 document.addEventListener('keydown', event => {
@@ -368,6 +427,7 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
     switchObject(event.key === 'ArrowLeft' ? -1 : 1);
 });
+updateObjectURL('replaceState');
 updateObjectDescription();
 let zoomAnchor = null;
 let seedFocus = null;
@@ -482,7 +542,9 @@ renderer.domElement.addEventListener('wheel', event => {
     event.preventDefault();
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? mount.clientHeight : 1;
     const delta = THREE.MathUtils.clamp(event.deltaY * unit, -150, 150);
-    changeZoom(delta * (event.ctrlKey ? .004 : .0018), event.clientX, event.clientY);
+    // Pinch wheel events use the opposite sign from our scroll-to-approach control.
+    // Spreading fingers must decrease camera distance; pinching must increase it.
+    changeZoom(delta * (event.ctrlKey ? -.004 : .0018), event.clientX, event.clientY);
 }, { passive: false });
 renderer.domElement.addEventListener('pointerdown', event => {
     if (event.button !== 0 || pointer) return;

@@ -21,12 +21,7 @@ async function collect(directory) {
 }
 await collect('assets');
 const html = await readFile(join(root, 'nothinghereyet.html'), 'utf8');
-// Blob modules have no filesystem directory. Preserve the drawing code and
-// resolve its four existing textures from decrypted, in-memory image URLs.
-const artworkURL = "new URL(`./textures/${name}.png${name === 'seed-flow' ? '?v=phrases-2' : ''}`, import.meta.url).href";
-const melon = Buffer.from(files['assets/watermelon.js'], 'base64').toString('utf8');
-if (!melon.includes(artworkURL)) throw new Error('Artwork loader changed; update the protected build before publishing.');
-files['assets/watermelon.js'] = Buffer.from(melon.replace(artworkURL, 'globalThis.__ramblingsArtwork[name]')).toString('base64');
+// The artwork loader accepts decrypted image URLs supplied by the lock page.
 const salt = randomBytes(16), iv = randomBytes(12), iterations = 600000;
 const key = pbkdf2Sync(password, salt, iterations, 32, 'sha256');
 const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -44,6 +39,7 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 }
 await writeFile(join(output, 'nothinghereyet.html'), await readFile(join(root, 'tools/ramblings-lock.html')));
 await writeFile(join(output, 'ramblings.encrypted.json'), JSON.stringify(payload));
+await writeFile(join(output, '.nojekyll'), '');
 // Retain the library's attribution alongside its encrypted distribution.
 await writeFile(join(output, 'THREE-LICENSE.txt'), await readFile(join(root, 'assets/vendor/three/LICENSE')));
 console.log(`Protected site built at ${output}\nPublish only this directory. The source checkout is NOT password protected.`);

@@ -108,8 +108,9 @@
                     return url;
                 }
                 const artwork = {};
-                for (const name of ['rind', 'flesh', 'writing', 'seed-flow']) {
-                    artwork[name] = blob(decode(bundle.files[`assets/textures/${name}.png`]), 'image/png');
+                for (const path of Object.keys(bundle.files)) {
+                    const match = /^assets\/textures\/([^/]+)\.png$/.exec(path);
+                    if (match) artwork[match[1]] = blob(decode(bundle.files[path]), 'image/png');
                 }
                 let html = bundle.html.replace(/<link\b[^>]*rel="preload"[^>]*>/g, '');
                 html = html.replace(/src="assets\/ramblings-page\.js[^\"]*"/, `src="${moduleURL('assets/ramblings-page.js')}"`);

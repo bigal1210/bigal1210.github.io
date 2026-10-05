@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         name = self.path.removeprefix('/__bake/')
-        if self.headers.get('Origin') != 'http://127.0.0.1:8766' or name not in ('rind', 'flesh', 'writing', 'seed-flow', 'state'):
+        if self.headers.get('Origin') != 'http://127.0.0.1:8766' or name not in ('rind', 'flesh', 'writing', 'seed-flow', 'baseball-writing', 'baseball-marks', 'state'):
             self.send_error(403)
             return
         length = int(self.headers.get('Content-Length', '0'))

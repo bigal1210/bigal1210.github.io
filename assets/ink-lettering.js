@@ -1,6 +1,13 @@
 // Original pen paths. Coordinates describe each pen movement, not font glyphs.
 // Baseline is y=90; lower-case bodies start near y=35, with real descenders.
 const letters = {
+    W: [84, [[[7,13],[21,88],[40,39],[59,89],[78,12]]]],
+    M: [76, [[[10,89],[12,13],[36,61],[64,12],[65,89]]]],
+    J: [51, [[[8,15],[45,13]],[[35,14],[34,70],[27,88],[12,89],[5,78]]]],
+    C: [63, [[[54,24],[40,12],[22,16],[10,38],[11,66],[26,87],[45,87],[56,77]]]],
+    B: [62, [[[12,90],[13,14]],[[13,14],[38,13],[50,26],[44,43],[14,49],[39,48],[53,64],[47,83],[28,89],[12,88]]]],
+    "'": [23, [[[14,12],[13,22],[8,29]]]],
+    ':': [23, [[[11,48],[13,50]],[[11,86],[13,89]]]],
     a: [57, [[[45,44],[22,37],[10,54],[12,82],[29,85],[42,68],[46,43],[43,86],[54,83]]]],
     b: [56, [[[13,10],[12,48],[11,87]],[[13,57],[30,38],[46,45],[45,73],[27,87],[13,82]]]],
     c: [49, [[[43,44],[23,36],[9,52],[12,81],[31,86],[44,77]]]],
@@ -63,8 +70,11 @@ function widthFor(character, index) {
     if (character === ' ') return 35 * (1 + .4 * penRandom(index, 4));
     return glyphFor(character).width * letterSize(index).width + 7 + 2 * penRandom(index, 5);
 }
-export function measureInkPassage(text) {
-    return Array.from(text).reduce((total, char, i) => total + widthFor(char, i), 0);
+function advanceFor(character, index, options) {
+    return options?.advances?.get(index) ?? widthFor(character, index);
+}
+export function measureInkPassage(text, options) {
+    return Array.from(text).reduce((total, char, i) => total + advanceFor(char, i, options), 0);
 }
 export function measureInkCharacter(character, index) {
     return widthFor(character, index);
@@ -167,23 +177,40 @@ function penPath(ctx, points, seed, pressure = 3.1) {
     }
     ctx.restore();
 }
-export function drawInkPassage(ctx, text, x, baseline, scale, indexOffset = 0) {
+export function drawInkPassage(ctx, text, x, baseline, scale, indexOffset = 0, inkWeight = 1, options) {
     let cursor = x;
     Array.from(text).forEach((character, position) => {
         const index = position + indexOffset;
         const glyph = glyphFor(character);
         const size = letterSize(index);
+        const variation = options?.steady?.has(index) ? .2 : 1;
+        const baselineVariation = variation * (options?.smoothBaseline?.has(index) ? .15 : 1);
+        size.width = 1 + (size.width - 1) * variation;
+        size.height = 1 + (size.height - 1) * variation;
         ctx.save();
-        ctx.translate(cursor, baseline);
+        ctx.translate(cursor + (options?.xOffsets?.get(index) ?? 0) * scale, baseline);
         ctx.scale(scale, scale);
         // Each letter leans and wanders independently around its baseline center.
         // Keep these choices stable while rotating or zooming the watermelon.
         const halfWidth = glyph.width * size.width / 2;
-        ctx.translate(halfWidth + 1.5 * penRandom(index, 6), 9 * penRandom(index, 7));
-        ctx.rotate(.095 * penRandom(index, 8));
-        ctx.transform(size.width, 0, -.085 + .1 * penRandom(index, 9), size.height, -halfWidth, -90 * size.height);
+        ctx.translate(halfWidth + 1.5 * penRandom(index, 6) * variation, 9 * penRandom(index, 7) * baselineVariation);
+        ctx.rotate(.095 * penRandom(index, 8) * baselineVariation);
+        ctx.transform(size.width, 0, -.085 + .1 * penRandom(index, 9) * variation, size.height, -halfWidth, -90 * size.height);
         ctx.fillStyle = '#242424';
-        glyph.paths.forEach((path, j) => penPath(ctx, path, index * 2.17 + j, 4.9 + .65 * Math.sin(index * .7)));
+        if (character === '.' && options?.roundPeriods) {
+            // A filled ink dot stays legible instead of becoming a tiny dash.
+            ctx.beginPath();
+            for (let point = 0; point < 16; point++) {
+                const angle = point / 16 * Math.PI * 2;
+                const radius = 5.7 * (1 + .08 * Math.sin(angle * 3 + index));
+                const px = 12 + Math.cos(angle) * radius;
+                const py = 86 + Math.sin(angle) * radius;
+                point ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+            }
+            ctx.closePath();ctx.fill();
+        } else {
+            glyph.paths.forEach((path, j) => penPath(ctx, path, index * 2.17 + j, (4.9 + .65 * Math.sin(index * .7)) * inkWeight));
+        }
         const center = glyph.width / 2;
         for (const accent of glyph.accents) {
             if (accent === '\u0308') {
@@ -194,6 +221,6 @@ export function drawInkPassage(ctx, text, x, baseline, scale, indexOffset = 0) {
             }
         }
         ctx.restore();
-        cursor += widthFor(character, index) * scale;
+        cursor += advanceFor(character, index, options) * scale;
     });
 }

@@ -21,3 +21,8 @@ export const flowRambling = [
     'Lead, but follow the world.',
     'How to go with the flow and have it work out every time.'
 ];
+
+export const baseballRambling = [
+    ".I just need. My mind needed a new place. My mind couldn't take it anymore. Just think about people who stay in prison or stay in one place. That's why you see me working in a new place: Lobby Shop, Cool Beans.",
+    "Naturally I love nature. When I sleep in the living room, I can see the trees and grass. Naturally my mind loves nature. I need to see outside. It just makes me happy. It's like my baby. He never cries outside. When we outside he never cries."
+];

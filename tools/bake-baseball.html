@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Bake baseball writing</title>
+<button id="bake">Save baseball writing</button><pre id="status">Ready.</pre>
+<script type="module">
+import { baseballRambling } from '../assets/ramblings.js?v=baseball-writing-1';
+import { drawInkPassage, measureInkPassage, measureInkCharacter } from '../assets/ink-lettering.js?v=smooth-both-openings-1';
+import { baseballInkOptions } from '../assets/baseball-lettering.js?v=smooth-both-openings-1';
+document.querySelector('#bake').onclick = async () => {
+    const status = document.querySelector('#status');
+    try {
+        const rowsPerPassage = 4, innerWidth = 4080, rowHeight = 512;
+        const atlas = document.createElement('canvas');
+        atlas.width = atlas.height = 4096;
+        const ctx = atlas.getContext('2d');
+        for (let passage = 0; passage < baseballRambling.length; passage++) {
+            const text = baseballRambling[passage] + '       ';
+            const strip = document.createElement('canvas');
+            strip.width = innerWidth * rowsPerPassage; strip.height = rowHeight;
+            const inkOptions = baseballInkOptions(text);
+            const scale = (strip.width - 48) / measureInkPassage(text, inkOptions);
+            if (185 * scale > rowHeight) throw new Error('Lettering exceeds atlas row height');
+            // The first continuation dot replaces the period after Beans.
+            // Keep the original measured width so every letter stays in place.
+            const drawnText = passage === 0 ? baseballRambling[passage].slice(0, -1) : text;
+            // Skip the stray leading period without shifting or redrawing the other letters differently.
+            const skipLeadingDot = passage === 0 && drawnText.startsWith('.');
+            const leadingAdvance = skipLeadingDot ? measureInkCharacter('.', 0) * scale : 0;
+            drawInkPassage(strip.getContext('2d'), skipLeadingDot ? drawnText.slice(1) : drawnText,
+                24 + leadingAdvance, 125 * scale, scale, skipLeadingDot ? 1 : 0, 1.75, inkOptions);
+            for (let row = 0; row < rowsPerPassage; row++) {
+                ctx.drawImage(strip, row * innerWidth, 0, innerWidth, rowHeight,
+                    8, (passage * rowsPerPassage + row) * rowHeight, innerWidth, rowHeight);
+            }
+        }
+        const blob = await new Promise(resolve => atlas.toBlob(resolve, 'image/png'));
+        const response = await fetch('/__bake/baseball-writing', {method:'POST', body:blob});
+        if (!response.ok) throw new Error('Could not save baseball lettering');
+        status.textContent = `Saved entire passage: ${baseballRambling.join(' ').length} characters. Two bold handwritten tracks. Atlas: 4096 × 4096.`;
+    } catch(error) { status.textContent = error.stack; }
+};
+</script></html>

@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Bake baseball markings</title>
+<button id="bake">Save baseball markings</button><pre id="status">Ready.</pre>
+<script type="module">
+function star(ctx, x, y, r) {
+    ctx.beginPath();
+    for(let i=0;i<10;i++) {
+        const a=-Math.PI/2+i*Math.PI/5, radius=i%2?r*.4:r;
+        const px=x+Math.cos(a)*radius, py=y+Math.sin(a)*radius;
+        i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.closePath();ctx.fill();
+}
+document.querySelector('#bake').onclick=async()=>{
+    const status=document.querySelector('#status');
+    try {
+        await document.fonts.load('150px "Brush Script MT"');
+        await document.fonts.load('bold italic 56px "Arial Narrow"');
+        const canvas=document.createElement('canvas'); canvas.width=canvas.height=2048;
+        const ctx=canvas.getContext('2d');ctx.scale(2,2);
+        ctx.fillStyle=ctx.strokeStyle='#242424';ctx.textAlign='center';
+        ctx.font='150px "Brush Script MT"';
+        ctx.fillText('Rawlings',512,153,600);
+        ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(512,182,61,19,-.03,0,Math.PI*2);ctx.stroke();
+        ctx.font='bold italic 48px "Brush Script MT"';ctx.fillText('R',512,194);
+        // Center the visible ink of the whole title block on the ball.
+        ctx.font='bold italic 46px "Arial Narrow"';
+        const officialBounds=ctx.measureText('OFFICIAL');
+        ctx.font='bold italic 56px "Arial Narrow"';
+        const leagueBounds=ctx.measureText('AMADOU BARRY QUOTE');
+        const titleTop=Math.min(396,432-officialBounds.actualBoundingBoxAscent,
+            492-leagueBounds.actualBoundingBoxAscent);
+        const titleBottom=Math.max(436,432+officialBounds.actualBoundingBoxDescent,
+            492+leagueBounds.actualBoundingBoxDescent);
+        ctx.save();ctx.translate(0,512-(titleTop+titleBottom)/2);
+        ctx.font='bold italic 46px "Arial Narrow"';ctx.fillText('OFFICIAL',512,432);
+        star(ctx,384,416,20);star(ctx,640,416,20);
+        ctx.font='bold italic 56px "Arial Narrow"';ctx.fillText('AMADOU BARRY QUOTE',512,492,655);
+        ctx.restore();
+        // Official vector silhouette, with its original aspect ratio preserved.
+        const mlbMark=new Image();
+        mlbMark.src='../assets/mlb-mark.svg';
+        await mlbMark.decode();
+        const markWidth=225, markHeight=markWidth*72/128.15;
+        ctx.drawImage(mlbMark,512-markWidth/2,891.5-markHeight/2,markWidth,markHeight);
+        // Fine gaps in the print make the branding sit with the drawn ink.
+        let state=3817;const random=()=>((state=(1664525*state+1013904223)>>>0)/4294967296);
+        ctx.globalCompositeOperation='destination-out';
+        for(let i=0;i<3300;i++) {
+            ctx.beginPath();ctx.ellipse(180+random()*664,60+random()*900,.18+random()*.5,.2+random()*.65,0,0,Math.PI*2);ctx.fill();
+        }
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+        const response=await fetch('/__bake/baseball-marks',{method:'POST',body:blob});
+        if(!response.ok)throw new Error('Could not save branding');
+        status.textContent='Saved Rawlings, Official Amadou Barry Quote, and the corrected monochrome MLB batter mark.';
+    }catch(error){status.textContent=error.stack;}
+};
+</script></html>

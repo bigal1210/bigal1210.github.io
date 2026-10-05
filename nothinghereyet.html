@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Ramblings — Alexander Atalla</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #fff; color: #282828; font: 300 12px 'IBM Plex Mono', monospace; }
+        header { position: absolute; top: 32px; left: 36px; right: 36px; display: flex; justify-content: space-between; }
+        a { color: inherit; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        h1 { margin: 0; font-size: inherit; font-weight: 400; }
+        main { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 100px 24px; }
+        form { position: relative; width: min(100%, 250px); }
+        .entry { width: 100%; }
+        input { display: block; width: 100%; height: 30px; border: 1px solid #aaa; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: center; padding: 0 8px; appearance: none; }
+        input::placeholder { color: #808080; opacity: 1; }
+        :focus-visible { outline: 1px solid #111; outline-offset: 2px; }
+        #status { position: absolute; top: 100%; left: 0; right: 0; line-height: 1.6; margin: 16px 0 0; color: #777; }
+        noscript { display: block; margin: 20px; }
+        @media (max-width: 600px) { header { top: 24px; left: 22px; right: 22px; } }
+    </style>
+</head>
+<body>
+    <header><a href="Main.html">← Alexander Atalla</a><h1>Ramblings</h1></header>
+    <main>
+        <form id="unlock">
+            <div class="entry">
+                <input id="password" aria-label="Password" name="password" type="password" autocomplete="current-password" aria-describedby="status" placeholder="password" enterkeyhint="go" required>
+                <button type="submit" aria-label="Unlock Ramblings" hidden>Unlock</button>
+            </div>
+            <p id="status" role="status" aria-live="polite"></p>
+            <noscript>JavaScript is needed to unlock this page.</noscript>
+        </form>
+    </main>
+    <script type="module">
+        const form = document.querySelector('#unlock');
+        const input = document.querySelector('#password');
+        const button = form.querySelector('button');
+        const status = document.querySelector('#status');
+        const decode = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
+        const text = value => new TextDecoder().decode(decode(value));
+        // A tab-scoped unlock credential; never persist the typed password.
+        const sessionName = `ramblings-unlock:${location.pathname}`;
+        function forgetSession() {
+            try { sessionStorage.removeItem(sessionName); } catch {}
+        }
+        let busy = false;
+        async function unlock(saved = null) {
+            if (busy) return;
+            if (!globalThis.crypto?.subtle) {
+                status.textContent = 'Please open this page over HTTPS, or use localhost for the preview.';
+                return;
+            }
+            busy = true;
+            button.disabled = true;
+            form.setAttribute('aria-busy', 'true');
+            status.textContent = 'Opening…';
+            const urls = [];
+            let stage = 'download';
+            try {
+                const response = await fetch('ramblings.encrypted.json', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Could not download content');
+                const payload = await response.json();
+                if (payload.version !== 1 || payload.iterations !== 600000) throw new Error('Unsupported content');
+                stage = 'password';
+                let key;
+                if (saved) {
+                    if (saved.salt !== payload.salt) {
+                        forgetSession();
+                        status.textContent = '';
+                        return;
+                    }
+                    key = await crypto.subtle.importKey('raw', decode(saved.key), 'AES-GCM', true, ['decrypt']);
+                } else {
+                    const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(input.value), 'PBKDF2', false, ['deriveKey']);
+                    input.value = '';
+                    key = await crypto.subtle.deriveKey(
+                        { name: 'PBKDF2', salt: decode(payload.salt), iterations: payload.iterations, hash: 'SHA-256' },
+                        material, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+                }
+                const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: decode(payload.iv) }, key, decode(payload.ciphertext));
+                stage = 'open';
+                const bundle = JSON.parse(new TextDecoder().decode(decrypted));
+                const blob = (bytes, type) => {
+                    const url = URL.createObjectURL(new Blob([bytes], { type }));
+                    urls.push(url);
+                    return url;
+                };
+                const modules = new Map();
+                const resolving = new Set();
+                function moduleURL(path) {
+                    if (modules.has(path)) return modules.get(path);
+                    if (resolving.has(path) || !bundle.files[path]) throw new Error(`Invalid module: ${path}`);
+                    resolving.add(path);
+                    const source = text(bundle.files[path]).replace(
+                        /((?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*))(['"])(\.[^'"]+)\2/g,
+                        (_, prefix, quote, specifier) => {
+                            const dependency = new URL(specifier, `https://bundle.invalid/${path}`).pathname.slice(1);
+                            return prefix + quote + moduleURL(dependency) + quote;
+                        });
+                    const url = blob(source, 'text/javascript');
+                    modules.set(path, url);
+                    resolving.delete(path);
+                    return url;
+                }
+                const artwork = {};
+                for (const name of ['rind', 'flesh', 'writing', 'seed-flow']) {
+                    artwork[name] = blob(decode(bundle.files[`assets/textures/${name}.png`]), 'image/png');
+                }
+                let html = bundle.html.replace(/<link\b[^>]*rel="preload"[^>]*>/g, '');
+                html = html.replace(/src="assets\/ramblings-page\.js[^\"]*"/, `src="${moduleURL('assets/ramblings-page.js')}"`);
+                const setup = `<script>globalThis.__ramblingsArtwork = ${JSON.stringify(artwork)};<\/script>`;
+                html = html.replace('<head>', '<head>' + setup);
+                try {
+                    const bytes = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+                    sessionStorage.setItem(sessionName, JSON.stringify({
+                        salt: payload.salt, key: btoa(String.fromCharCode(...bytes))
+                    }));
+                } catch {
+                    // Storage may be disabled; unlocking still works for this visit.
+                }
+                document.open();
+                document.write(html);
+                document.close();
+            } catch (error) {
+                for (const url of urls) URL.revokeObjectURL(url);
+                if (saved && stage === 'password') forgetSession();
+                status.textContent = stage === 'password'
+                    ? (saved ? '' : 'That password didn’t open it. Try again.')
+                    : stage === 'download'
+                        ? 'Couldn’t load the page. Check your connection and try again.'
+                        : 'Couldn’t open the artwork. Please reload and try again.';
+                input.focus();
+            } finally {
+                busy = false;
+                button.disabled = false;
+                form.removeAttribute('aria-busy');
+            }
+        }
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            unlock();
+        });
+        let saved;
+        try {
+            saved = JSON.parse(sessionStorage.getItem(sessionName));
+        } catch { forgetSession(); }
+        if (saved) unlock(saved);
+    </script>
+</body>
+</html>

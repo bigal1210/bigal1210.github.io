@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+
+    <title>Shorter Thoughts</title>
+
+    <meta property="og:title" content="Shorter Thoughts">
+    <meta property="og:description" content="Shorter Thoughts">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://alexanderatalla.com/shorterthoughts.html">
+    <meta property="og:image" content="https://alexanderatalla.com/preview.jpg">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Shorter Thoughts">
+    <meta name="twitter:description" content="Shorter Thoughts">
+    <meta name="twitter:image" content="https://alexanderatalla.com/preview.jpg">
+
+    <style>
+
+        .home-nav {
+
+            position: fixed;
+
+            top: 30px;
+
+            left: 30px;
+
+            width: 100px;
+
+            height: 100px;
+
+            cursor: pointer;
+
+            z-index: 1000;
+
+        }
+
+        .home-nav img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: contain;
+
+        }
+
+        * {
+
+            margin: 0;
+
+            padding: 0;
+
+            box-sizing: border-box;
+
+        }
+
+        body {
+
+            font-family: 'IBM Plex Mono', monospace;
+
+            font-weight: 350;
+
+            background: white;
+
+            min-height: 100vh;
+
+            overflow: hidden;
+
+            position: relative;
+
+            color: black;
+
+        }
+
+        .container {
+
+            width: 100vw;
+
+            height: 100vh;
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+        .title {
+
+            position: absolute;
+
+            top: 30px;
+
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            color: black;
+
+            font-size: 16px;
+
+            font-family: 'IBM Plex Mono', monospace;
+
+            font-weight: 300;
+
+            z-index: 100;
+
+            letter-spacing: 0.5px;
+
+        }
+
+        .home-link {
+
+            position: absolute;
+
+            top: 30px;
+
+            left: 30px;
+
+            color: black;
+
+            text-decoration: none;
+
+            font-size: 16px;
+
+            font-family: 'IBM Plex Mono', monospace;
+
+            font-weight: 350;
+
+            z-index: 100;
+
+            transition: opacity 0.3s ease;
+
+        }
+
+        .home-link:hover {
+
+            opacity: 0.7;
+
+        }
+
+        .thought-bubble {
+
+            position: absolute;
+
+            width: 140px;
+
+            height: 140px;
+
+            border-radius: 50%;
+
+            background: white;
+
+            border: 1px solid black;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            text-align: center;
+
+            padding: 20px;
+
+            cursor: pointer;
+
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+            user-select: none;
+
+        }
+
+        .thought-bubble:hover {
+
+            transform: scale(1.15);
+
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+
+            border-color: #333;
+
+            cursor: grab;
+
+        }
+
+        .thought-bubble:active {
+
+            cursor: grabbing;
+
+        }
+
+        .thought-bubble.focused {
+
+            position: fixed !important;
+
+            top: 5vh !important;
+
+            left: 50% !important;
+
+            transform: translateX(-50%) !important;
+
+            width: 500px !important;
+
+            height: auto !important;
+
+            min-height: 300px !important;
+
+            max-height: 90vh !important;
+
+            border-radius: 8px !important;
+
+            z-index: 1000;
+
+            background: white;
+
+            border: 1px solid #e0e0e0;
+
+            padding: 40px;
+
+            font-size: 16px;
+
+            line-height: 1.7;
+
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            cursor: default;
+
+            overflow-y: auto;
+
+            display: block;
+
+        }
+
+        .thought-bubble.minimized {
+
+            width: 70px !important;
+
+            height: 70px !important;
+
+            padding: 8px !important;
+
+            font-size: 9px !important;
+
+            opacity: 0.4;
+
+            transition: all 0.4s ease;
+
+        }
+
+        .thought-text {
+
+            font-size: 12px;
+
+            color: black;
+
+            line-height: 1.3;
+
+            font-family: 'IBM Plex Mono', monospace;
+
+            font-weight: 350;
+
+            word-wrap: break-word;
+
+            overflow-wrap: break-word;
+
+            white-space: pre-wrap;
+
+        }
+
+        .focused .thought-text {
+
+            font-size: 16px;
+
+            line-height: 1.7;
+
+            color: #333;
+
+            text-align: left;
+
+            width: 100%;
+
+            height: auto;
+
+            white-space: pre-wrap;
+
+            word-wrap: break-word;
+
+            overflow-wrap: break-word;
+
+        }
+
+        .minimized .thought-text {
+
+            font-size: 9px;
+
+            line-height: 1.2;
+
+        }
+
+        .close-btn {
+
+            position: absolute;
+
+            top: 15px;
+
+            right: 15px;
+
+            width: 24px;
+
+            height: 24px;
+
+            border-radius: 50%;
+
+            background: rgba(0, 0, 0, 0.1);
+
+            border: none;
+
+            cursor: pointer;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 18px;
+
+            color: black;
+
+            transition: all 0.2s ease;
+
+            font-family: 'IBM Plex Mono', monospace;
+
+            font-weight: 350;
+
+        }
+
+        .focused .close-btn {
+
+            display: flex;
+
+        }
+
+        .close-btn:hover {
+
+            background: rgba(0, 0, 0, 0.2);
+
+            color: black;
+
+        }
+
+        .overlay {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            background: rgba(0, 0, 0, 0.4);
+
+            z-index: 999;
+
+            display: none;
+
+            backdrop-filter: blur(4px);
+
+        }
+
+        .overlay.active {
+
+            display: block;
+
+        }
+
+        /* Responsive adjustments */
+
+        @media (max-width: 768px) {
+
+            .thought-bubble {
+
+                width: 120px;
+
+                height: 120px;
+
+                padding: 16px;
+
+            }
+
+           
+
+            .thought-bubble.focused {
+
+                padding: 30px 20px;
+
+                max-width: 90%;
+
+                width: 90%;
+
+                max-height: 85vh;
+
+            }
+
+           
+
+            .focused .thought-text {
+
+                font-size: 14px;
+
+                line-height: 1.5;
+
+            }
+
+           
+
+            .title {
+
+                font-size: 24px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <a href="/Main.html" class="home-nav">
+
+        <img src="/Me behind door spectroscopy.png" alt="Home">
+
+    </a>
+
+    <div class="container">
+
+        <h1 class="title">Shorter Thoughts</h1>
+
+        <div class="overlay" id="overlay"></div>
+
+       
+
+        <div class="thought-bubble" data-thought="6" data-thought-title="Brain Gyms and AI" data-thought-content="Fitness influencers have been a thing for over 100 years. Nothing has changed, people only get fatter. Why would this time be any different.
+
+Meditation has been around for thousands of years. Nothing has changed, people are sadder and more reliant on drugs now than ever. Why would this time be any different?
+
+Libraries have been around for thousands of years, the internet for decades, and YouTube for more than 10. Nothing has changed, people are only getting dumber, why should this time be any different?
+
+First, we outsourced metabolic demands of movement via guns, tractors, cars, factories, elevators, etc.
+
+Humans are inherently lazy. An ATP molecule saved is ATP molecule earned.
+
+We soon discovered that in fact exercise is crucial for health and life, now we go to gyms where we workout for no explicit purpose.
+
+We're in the process of entirely outsourcing metabolic demands of thinking, first via calculators, now via super duper computers, and soon via the functional equivalent of brain implants.
+
+Will we soon realize that metabolic demands of thinking are crucial for health and longevity.
+
+Will centers for complex integrals for no explicit purpose soon be crucial aspects of biohackers health and longevity routines?
+
+That's why I'm studying physics. LOL 😹.">
+
+            <div class="thought-text">Brain Gyms and AI</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="7" data-thought-title="Happiness" data-thought-content="People think that being happy is about doing something, thinking something, or they think that it's a thing. But really, happiness is a non - thing. It's about kinda being a retard. Just empty minded floating thru space. Like duhhhh hey, I'm here 😀. Ppl try to be happy and thats exactly what prevents the happy from coming. To be happy, you really have to try to be retarded. Just be retarded and absent minded.
+
+This doesn't mean you should also be an idiot or un intelligent, actually being an idiot is exactly what we're trying to avoid. Idiocy is thinking really hard or thinking too hard and not getting any anywhere or any answers right. Being retarded is just being retarded. This is exactly the point of meditation, to cultivate such a profound state of focus that your brain just beams off into absent minded retardation, while also maintaining the ability to be aware present and sharp if you want to.
+
+For Happiness, there's nothing to think about, and you think there is, that's why you're not happy. Literally just stop thinking so hard about shit and you'll be good. Think about stuff - like think about how you're gonna do this thing or that thing, but definitely don't think about how you feel, that's a recipe for un-happiness. Let yourself feel how you feel and at the same time don't think about it. Does that make sense? If you're not happy, you're probably an idiot, if you're happy, you're probably being retarded. Just duh, I'm here. Hehe. Some of the times when I've been happiest in my life were actually when I had a concussion (I've had like 6). I had no space or time to think, I was just retarded watching the trees rustling, cuz my brain was empty and legit couldn't think. There are ways to train non thinking (meditation, sports, art, other non-stressful hobbies that involve not thinking and becoming very enthralled in the thing you're doing). But if your brain is just too active that you cant stop thinking and just be retarded, try to down regulate your physiology enough so you can allow yourself to be more retarded again. There are ways to do that too, adequate nutrition and light environment, meditation, friends, reading (especially dumb books), intense exercise and sufficient rest after, healing old injuries in the body (this is a big one), but you shouldn't need any of that, happiness is mostly a thinking thing, those things just help.
+
+Happiness by nature comes and goes. Don't force it, don't force any feelings, if a feeling arises you don't like, don't force it away. You should be retarded enough not to notice that you don't like the feeling and also retarded enough not to care about the feeling if you do. Just maintain a constant retardation in all things you do and all things you feel and you'll feel happy at some point pretty soon. Make sure not to wait for retardation, or happiness will never come. Must be retarded now.
+
+So, overall the goal is to be retarded and happy, and also intelligent at the same time because we want to actually be aware of our happiness and also we wanna have cool interesting well articulated thoughts and do cool good things in life.
+
+So, all that means is you need to separate the too. Be intelligent, but also be retarded in life. Be an intelligent, calm, smiling retard, but mostly an absent minded retard.">
+
+            <div class="thought-text">Happiness</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="8" data-thought-title="I Hate Hikes" data-thought-content="I to some degree hate hikes, because you do the hike and get to the top and you’re supposed to say oh my golly this is the most beautiful absurd thing i’ve ever seen. Then you sorta just say alright, take a pic make a pose and back down the mountain we go, and make sure to stay on the trail as you do. But it never really lives up to the hype does it? Hikes are a weird pilgrimage or journey thing, a bunch of serious people wearing their maps and hiking clothes and fancy backpacks saying alright we’re going up as and this is a mission we all must do.
+        On the way up you see people who are on the way down and tell you oh yeah you’re almost there just a bit more, and they say how magnificent and beautiful it all is at the top and oh its so worth it. And you smile and say okay! Then you keep walking up hill.And you build up some expectation of how it’s supposed to be, and then you get there and see a bunch of people sitting eating a sandwich.  I don’t really get why people go on hikes.">
+
+            <div class="thought-text">I Hate Hikes</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="9" data-thought-title="Quantum Mechanics Many Worlds Interpretation" data-thought-content="In quantum mechanics, each particle, like an electron for example, holds many different possible positions at once. Meaning the particle could literally be in multiple different places until it is observed. Once the particle is observed, the wave function that describes the particle's different possible positions collapses, and the particle in question takes on one specific position in space, the one that you now see. One explanation of wave function collapse is the many worlds interpretation which describes that all possible outcomes of quantum measurement actually do occur. Meaning, each different possible position that a particle could hold actually occurs in another reality. Instead of wave function collapse and the particle taking on just one position in space, reality continually splits into parallel worlds where each quantum possibility occurs.
+
+        The philosophical interpretation of this theory suggests that there are an infinite number of parallel universes, each with different iterations and possibilities for what could have happened (or in this case because the other universes are actually real, did happen). So, within these infinite other worlds, there are an infinite number of Alexanders, each living similar, or not-so-similar lives, with inflection points at different decisions in their lives. It's a little bit crazy to think that there is literally another universe with another me, standing typing on his computer, who equally believes that he is the real, truest, most original me, and his life is about to take an entirely different path depending on what he decides to do next. But in this specific world, where I feel I am me, and you feel you are you reading this paper, I cannot know what happens to the other equally real me's, who decided to finish this sentence differently.
+        
+        I just have to live, and I know that somewhere else, in another galaxy or planet or part of the space-time continuum, there is an Alexander who lived his life, so that I don't have to. And that gives me peace knowing it's okay for me to live this life.
+        
+        In another world, Pop is happy with Alexander because he got a nice job right after graduation. In another world, there is an Alexander who dropped out of college and already built a billion-dollar startup. But that me is not me. For me, who feels his body is his own in this cosmically independent world, I just have to live, and I know that somewhere else, in another galaxy or planet or some other part of the space-time continuum, there exists an Alexander who lived the other way that I was thinking about living. There is another Alexander who achieved all his dreams and wishes, and there's also one who did not.
+        
+        I just have to be this Alexander and I shouldn't try to live the best life of all the Alexanders either, because that's impossible since there will always be a better Alexander (how would you even quantify which one is the better anyway). And that's all I can do. And this is how I want to live no matter what people tell or encourage me to do. There are some Alexanders who are successful, some who die young, some who are Olympic athletes or professional soccer players, some who are high school teachers, and some who are Buddhist monks or deep-sea explorers. Hopefully none are wife beaters or murderers or corrupt politicians, hopefully there isn't a Benjamin Netanyahu version of me, but unfortunately there probably is somewhere.
+        
+        There are probably even fewer me's though who are okay with their lives, and don't envy the other great Alexanders. Somewhere within the infinite multiplicity of possible lives I've lived, there are at least enough Alexanders who are happy, peaceful, and present. Probably those who are, decided to live their own, and that's the thread I'd like to weave. Because those other lives are inherently inaccessible to this Alexander. There is only this one and I only have 150-200 years to live it. Luckily, I am in no rush. Memento Mori.
+        “Your time is limited, so don't waste it living someone else's life. Don't be trapped by dogma — which is living with the results of other people's thinking. Don't let the noise of others' opinions drown out your own inner voice. And most important, have the courage to follow your heart and intuition. They somehow already know what you truly want to become. Everything else is secondary.” - Steve Jobs
+        ">
+
+            <div class="thought-text">Quantum Mechanics Many Worlds Interpretation</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="10" data-thought-title="Discipline is Bullshit" data-thought-content="I have been thinking about this topic for years. Finally, I feel like I know what my opinion is about it, or at least, I know what type of discipline I want to have.
+
+        People think they need discipline to achieve their goals. But, discipline will only get you started in the direction you need to go, if you don't drop it, discipline and “effort” will be the exact things holding you back.
+        
+        Discipline is not forced exerted control. It's not an internal battle that you fight and overcome just by the grit of your teeth. Forcing yourself to do things will only result in burn out. Real, sustainable discipline, requires minimal will power. The thing that you think discipline is, is actually effortless action. It's doing what you need (want) to do without resistance, hesitation, effort, or striving. It's just doing. 
+        
+        So if you need discipline to eat less. You have to realize it's not about forcing yourself to eat less, it's just about neither eating nor not eating. It becomes a non thing. Some things, like eating are about not-doing. Thats where you need to be absent minded, drop things from your mind and float. Drop all the perturbations and compulsive thoughts, just be like a bee or butterfly, dumbly floating from one thing to the next. This is how you truly get rid of those bad habits, it's not by actively avoiding them or purposefully doing the “better” thing, it's by letting go of them, letting them become non-things. It's like alcohol. I have an excellent relationship with alcohol, because I don't care about it. I have a friend who used to drink a ton, and do coke and meth (this guy has a physics PHD from MIT, 4.0 gpa, worked at Goldman. He is very smart). Now, he doesn't do drugs anymore, and even though alcohol borderline ruined his life at one point, he still drinks. He just doesn't give a fuck about it anymore, he's managed to be retarded about alcohol, and just have a beer without any baggage. It's an irrelevant thing that has no bearing on his life, so he drinks when he want to because he enjoys it, and in doing so, does not over drink, because it's just another thing that is good in appropriate moderation in his life. Effortless action and absent mind - the exact opposite of discipline is going to get you the thing you want from discipline. This is what it means to be absent minded.
+        
+        Sometimes, discipline is about engaging in an action, this is where it's important to be lazy. Take exercise for example, I have zero discipline when it comes to exercise, but I workout probably four times a week, almost without fail. People see the way I eat and workout and sleep and they say wow, you have so much discipline. I used to be confused because I never really thought of myself as a disciplined person, but it is true, there are some things I do surprisingly well in the “disciplined sense” and there are others I totally fail at. I noticed though, its mostly the things that others think I'm “disciplined” at that require no effort on my end, and it's the things that I'm really “bad at doing consistently” that require a ton of effort on my end. I just follow what I want and desire, and I only follow that. Of course, you have to make sure your desires aren't be bad ones though. This is where some time spent reflecting on what you really want in life is helpful. I've taken the time upfront to set clearly in my mind my values, my deepest desires for my life, and my most fundamental intrinsic motivations. Taking this time upfront allows me to hone in on and stay focused on what's important to me, without getting distracted by what's superficially motivating or extrinsically rewarded in society. This is the formula, for engaging in rewarding actions without effort. Take the time upfront to set and get in touch with your desires and intrinsic motivations, and then be absent minded as you follow them.
+        
+        Now, when people say I'm disciplined in my health regiment, I laugh and say, I'm quite lazy, it's really the opposite. I tap into my desires and I focus on how I feel in the moment. Sure, it takes some discipline to get started on the path of eating healthy, but once you start, and you feel good, all you need to do is pay attention to how you feel and that will keep you going. Tap into your deep desire, remind yourself of that desire, and then take action without effort, and if your motivation falters, just remind yourself of what you really desire. The only reason I try to get to bed early every night is because I feel so good on a full nights sleep and so bad not sleeping. It's got nothing to do with discipline, it's really more lazy and even a bit pathetic. This, by the way, is also how to have an extremely healthy lifestyle without being compulsive about it. It's a delicate and effortless balance. 
+        
+        Let's say you think you should workout. Before you decide to start, take time to think about and outline why you want to workout. What are your deepest intrinsic motivations behind achieving the goal associated with working out. Wanting to be “in shape”, or wanting to “not be fat” probably aren't deep enough, and if they are your immediate answer, keep asking yourself why, until you arrive at a core/foundational motivation that is driving your action. In doing this, you may realize that actually the thing you wanted has nothing to do with exercise, in which case, you may not need to exercise. Instead, do the other thing that will help you arrive at what you truly want. 
+        
+        Figure out what your deepest desires and intrinsic motivations, make them clear in your mind, establish why you want them and make sure you understand that you really do, and then go after them. If your “motivation” falters, remind yourself what you want, and you'll be right back on the effortless action bandwagon. 
+        
+        Me not eating junk food requires no discipline, because I eat cookies and ice cream all the time. I just make sure to only choose high quality cookies and ice cream with good quality ingredients. At the same time, I also know what feels good. I try to pay enough attention and be aware enough to recognize when certain things feel good and others feel bad. So, I indulge, and I really feel like I can have it all, without sacrifice. This is what I try to do to achieve my goals and get off of the discipline hamster wheel. I pay attention to what feels good, what feels bad, and what I truly desire, and figure out how I can have it all. For the most part - there's no need to sacrifice and no need to strive, effortless action is the way. 
+        
+        This entire perspective is not about avoiding what you want, or forcing yourself to do things you think you should do. It's about not making assumptions, about questioning your desires, fully indulging in what you truly want, and then following that. If you do that, you will need a lot less forced disciplined to accomplish your goals. You can just sit back and listen to yourself. Trust yourself. And follow yourself.
+        
+        
+        Frameworks I use to think about discipline. 
+        
+        1. Intrinsic motivation
+        2. Deep Desires
+        3. Using mindfulness to guide and rewire behaviors. (Read the mindfulness antidote to discipline for more on this) 
+            1. Note: Identifying your intrinsic motivation and deep desires makes it much easier to rewire your behavior.
+        4. Absent Mindedness/Effortless Action
+        
+        When you feel like you can do the thing you want while:
+        1. Eliminating striving and effort.
+        2. Have it all without sacrifice
+        
+        You'll get the benefits of hardcore discipline without wearing yourself out.
+        
+        The combination of all these leads to success through effortless action. ">
+
+            <div class="thought-text">Discipline is Bullshit</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="11" data-thought-title="Bitcoin" data-thought-content="
+Bitcoin is by far (and still is) the best (and coolest) place to put your money. 
+
+It's a deflationary speculative asset designed to be a store of value. Um, hello? That means that right now it's appreciating like a high beta tech stock, while retaining its value like gold as it converges toward becoming a mature store of value. Bitcoin isn't a company that can go bankrupt like those in the dot-com bubble, it's a decentralized monetary network that won't just 'disappear' like a business or stock.
+
+It does not get much better than that. You don't get many opportunities to get in on a store value while it's still in its speculative growth phase. That's a dream come true.
+
+There's a mismatch here and the mismatch wont last forever.
+
+Now for the moral side.
+
+Imagine being able to own an un-hackable un-steal-able non counterfeit-able near instantly transferable asset that is totally 100% yours without dependence on anyone, anything, any system, or any other institution to maintain or send it for you.
+
+It's not an investment, it's literally digital property that anybody can own and exchange no matter their race ethnicity creed skin color gender beliefs age religion or dogma. And no one can take it from you either, no matter how hard they try.
+
+UNREAL. If that's not the ultimate fuck you to the system, I don't know what is. Owning Bitcoin means something. That right there, is like the world united.
+
+Get some while there's still more to be mined. 
+
+Keep in mind, I'm nowhere near early with this (tho it is still early) or totally original in my thinking, but I do really believe what I wrote and cut me some slack, I only became conscious a few years ago.">
+            <div class="thought-text">Bitcoin</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="12" data-thought-title="The Mindfulness Antidote to Discipline" data-thought-content="
+        The mindfulness antidote to discipline explained through food and over eating:
+
+        With over eating, it's not about resisting more food - that will always fail. It's about paying attention to other things. Focusing on how you feel doing other things you enjoy, and how good you feel when you eat less. 
+        
+        If you're practice being mindful in a way that helps you notice when a behavior isn't rewarding anymore, the brain will disengage from the behavior on its own. All that's necessary is observing without judgment. Notice how it feels after you do something, especially something that you want to stop doing. You don't even need to do anything after, not much self talk is necessary, it's mostly just observation, feeling that feeling, not what you think about how you feel, just how you feel. Don't try to control the feeling or tell yourself a story about the feeling, just observe your body, your feelings, and what they do. If you give the brain the space to observe the negative feeling it will recognize that it actually doesn't like doing that thing, which will weaken the reward pathway associated with that thing. If you engage in an action you don't like and immediately beat yourself up after for doing it, your brain won't have the space to recognize how you actually feel and it will only create a negative loop of self loathing and disappointment that makes it harder to get over the bad habit. Giving it the space to feel whatever you feel after, is what will allow the brain to create new reward pathways, pushing you away from some things, and towards others. 
+        
+        In mindfulness based cognitive therapy, or behavioral neuroscience, this is called reward based learning. Overtime, your brain sees that the behavior isn't as rewarding as it thought, which lets it rewire the loop, allowing you to replace bad habits with actions that you think are healthier or that you'd prefer to engage in instead. When you do this though, make sure you start without preconceptions about what you “think” is good or bad. Your body will generally not lead you astray as long as you don't cloud it with thinking. If a behavior that you “think” is bad, feels good and continues to feel good in the aftermath, then maybe you don't need to make a change. Again, see how this has nothing to do with forced or exerted control. 
+        
+        Hating yourself for making mistakes or forcing yourself to do something your brain hasn't realized that you really want or that you yourself haven't taken the time to appropriately establish why you want, will lead to a fear based mindset around habits and discipline. Using this mindfulness strategy can help you gently rewire yourself so that actions are more sustainable easy, natural, and not hard.
+        
+        Warning: using this strategy might make you really bad at things like school because you'll realize that in general (depending on your school and professor) school doesn't do a great job encouraging learning for inner intrinsic purposes, or give students opportunity to develop genuine curiosity about the subject through things like guided inquiry and exploration.">
+            <div class="thought-text">The Mindfulness Antidote to Discipline</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="14" data-thought-title="Lady on a Cape Cod Bus" data-thought-content="On bus going from Chatham to Hyannis to go back to Boston, was talking with a lady sitting at my stop about her life and travels. We were the only two on the bus.
+
+It was the middle of March. Cold desolate Chatham. I haven't seen it like that many times before. Shops were mostly shuttered and restaurants closed.
+
+No one on the streets and one day I walked back from the village market in sub freezing temp with 4 gallons of water because I didn't know how to turn on the water at the house. My hands almost fell off. The guy selling me fish at the store flirtatiously asked if I was alone and how long I'd be in Chatham for.
+
+Walking through the streets, Chatham was empty, quiet, a bit eerie in March, there were streaks of sand blown onto the roads from the beaches. My favorite restaurant, The Impudent Oyster was open though, so I stepped in.
+
+The door lead to some other world, servers rushing around the floor carrying trays of T bone steaks, glasses overflowing with wine, lavish hats, groups laughing, the bar, bursting at its seams.
+
+The impudent oyster in the middle of an empty ghost town. Chatham's pale blue dot.
+
+What an interesting thing.
+
+The lady on the bus grew up in Orleans and lives in Chatham now. She told me about Florence and Las Vegas and England and Crete and the different pins she collected in each city along the way. She said, oh, I'm so happy I'm telling you about this, it's bringing up so many happy feelings.
+
+I imagined this woman as a young girl, growing up in Cape Cod. Eerie winters as a 12 year old.
+
+She went to travel the world after college. But at the end of it, came back to live in Chatham, and take the bus across cape cod; the land between the Christmas tree shop and the great pilgrim monument on the Massachusetts bay.  ">
+
+            <div class="thought-text">Lady on a Cape Cod Bus</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="13" data-thought-title="Meaning Of Life" data-thought-content="
+        Talking With Paul, Meaning of Life: 
+
+
+Alex: 
+What's the meaning of life?
+
+Paul: 
+Meaning is very vague in this context. Meaning of a word vs. meaning of life. Significance maybe is a better word. So then you say what's important to you? 
+
+- Family, work, living life to the full, taking care of my body. 
+- Religious practice is not important to me.
+
+Alex:
+Where does the world come from?
+
+Paul:
+- Important not to mix up science and religion.
+- Chain of events where if you keep asking why you arrive at just because. (Interjection from Alex: Watch the Feynman video about asking why) 
+- So then u ask why something rather than nothing but of course that's an impossible question because it presupposes something.
+- Origin of the universe is the job of physicists, there will always be some puzzling beginning most likely. Maybe it goes on forever. 
+- Maybe comforting to have an answer to this question, some feel it comforting to say god. 
+- Of course you could always ask what about god.
+- And religious people think you're being unpleasant but you know they dont have an answer, and well i dont know haha.
+
+Alex: 
+So what do you do about this mystery?
+
+Paul:
+- I don't do anything.
+- Philosophy is full of paradoxes and they play an important role because you feel a certain tension and you're so strongly inclined to make certain assumptions. 
+- Often the reaction to a puzzle is that you're making some kind of mistake, and even articulating it and thinking there was a problem. 
+- Real solution is often to look again and realize either:
+        - An assumption you were making is actually not that obvious
+        - Or you say it's not so clear that this comes from that
+        - Or the conclusion that you thought was impossible to accept, if you look at it in the right way you can accept.
+_________________________________________
+
+'Tell me', Wittgenstein once asked a friend, 'why do people always say, it was natural for man to assume that the sun went round the earth rather than that the earth was rotating?'
+
+ His friend replied, 'Well, obviously because it just looks as though the Sun is going round the Earth.' 
+
+Wittgenstein replied, 'Well, what would it have looked like if it had looked as though the Earth was rotating?' 
+
+What would it have looked like if we looked at all sciences from the viewpoint of Wittgenstein's philosophy?">
+            <div class="thought-text">Meaning of Life</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="15" data-thought-title="Drugs and the City" data-thought-content="The home less people.
+
+Pervade the city like a sea of moths. Flaccidly draping the streets. They can fly but just barely. They don't do much to hurt you. Just innocent holes in your shirt. Harmless but a nuisance nonetheless. Slowly taking over the city. Infiltrating and spreading their trade.
+
+They're deal makers see, they offer glimpses of the other side. Glimpses of a what could have been in another world. A world without countries, or possessions, or greed or hunger. Just all the people, living life in peace, living for today. They offer them a glimpse into the world of the life that comes after death. In exchange for their money, their lives, and their minds. Expanding out from the inside, inching closer each day. Getting closer to their makers. Getting closer to their master. Closer to their takers.
+
+
+They seek to  pervade. To take over. To infest and invade. Hook the weak, take advantage of the poor. Just for their own profit, nothing more, not power or glory, fame or a story. They're looking for safety from their neighbors, from the common laborers, the zombies who live outdoors.
+
+They seek to hide from their drug doing neighbors. To do their drugs in peace. By themselves. In sad places. Not on the streets covered with shit. Not in the dark shivering cold or on a mattress on the side walk. Not being chased by the Police. Instead they run from the evil authorities, the cosmic space rangers keeping order in the skies, making sure no one ever, ever figures it out. They too seek to escape this world but from the comfort of their own homes.
+
+They do so from their own guilded cages, or in rave-s, so they have the comfort to turn their own pages, and do it in stages, crawling through rare and sought after mazes. The stages the ages it must take until this feeling assuages. The pages the way-ages, the ages, all of the wages. All the wages.
+
+These people would get. Just to do their drugs in their own home. In their own comfortable places.
+
+The city of drugged out brothers.
+
+Some are more competent than others.">
+
+            <div class="thought-text">Drugs and the City</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+        <div class="thought-bubble" data-thought="16" data-thought-title="Dominic Fike" data-thought-content="I think Dominic Fike is such an amazing artist because he sings so passionately about the most ordinary things.
+
+Most people sing about love and heartbreak and death and such.
+
+But Fike sings about,
+
+Watching movies on his phone when nobody’s home
+And Chicken tenders in the hotel.
+
+The sound he creates inspired by such mundane activities is so impressive because most people look for inspiration in extremes.
+
+Contrast this with XXX, who takes relatively mundane words, relatively simple sounds and just matches them perfectly to these extreme emotions… which he articulates so well and heart wrenchingly through his songs.
+
+3 chords across the same simple plucking pattern. And yet somehow, listening to him is wading through god’s river. I mean you are drenched by the end of that shit.
+
+When I listen I can’t help but think, wow, does this guy actually feel this deeply? Oh my.
+
+A simple sound, simple words, fit so perfectly to such an intense emotion.
+
+I’ve dug two graves for us my dear
+Can’t pretend that I was perfect leaving you in fear,
+Oh man what a world the things I hear…
+
+Can’t seem to find someone’s shoulder,
+Who will I rely on when it’s over…
+
+I dug my nails into my arms
+she turned and laughed at all my scars
+
+what is my worth
+
+what is my worth?
+
+Structurally minimalist sound, simple words, not so simple feel.
+
+vs. Fike who turns the mundane into a literal musical masterpiece.
+
+For both, simplicity fuels design but each artist places their weights on opposite ends of the simplicity spectrum.
+
+And so I like both of them so much because paraphrasing from Steve Jobs: Simplicity is often harder than complexity and it takes a lot of work to make things simple and clean. To be truly simple, not just minimalist or lacking clutter takes a lot of clarity and focus.
+
+And I think you can really feel that clarity when you listen to their music, but it’s sort of reverse.
+
+Side note:
+
+One of my favorite things about them, and also Kanye especially in Ye and Kids See Ghosts album is that they often create such short songs, like a minute and a half long sometimes, but they feel like they last 10-20 mins.">
+
+            <div class="thought-text">Dominic Fike</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+
+        <div class="thought-bubble" data-thought="17" data-thought-title="Having it All" data-thought-content="My most fundamental life philosophy is that I want it all. People think that you need to sacrifice to have what you want. You can’t be rich, successful, compassionate and happy at the same time. You cant be fit and in shape while eating pizza and ice cream or without meticulously controlling everything that goes into your mouth. You cant date a pretty, smart, cool girl and also have a healthy-loving relationship. You can’t be nerdy and cool. You can’t be smart and an athlete and artistic at the same time. It’s always one or the other. The list goes on and on and on. They try so hard to box you in. To keep you from your dreams. You simply cannot have it all, is what they tell you. And it’s so frustrating and infuriating because it’s the biggest load of bullshit I’ve ever heard. It’s the most mind corrupting idea in society, it’s the little death that brings destruction. Destruction to your dreams and everything you have planned for your one little life.
+
+I think I can have it all. And it’s exactly what I’m doing. And I’m here to tell you that I think that you can have it all too, and you should aim to do so, without sacrifice.
+
+Do NOT sacrifice on your dreams. It’s a march we make. We march towards our dreams. We are the only ones who can stop or slow ourselves down. Drag me through the mud, society, try to stop me, world. There is nothing that can stand in my way. This is how I speak to myself. There is nothing that can stand in my way. This is what I believe. These are the rules I make for my own reality.
+
+I want it all.
+
+I want all my dreams.
+
+No one can tell me otherwise.
+
+And I will have them all.
+
+People are so scared to lose that they don’t even try.
+
+But, I cannot fail. That is literally what I believe.
+
+For success in life, find out what you want, and like the Prussians in 1871, simply march towards it. Do not sacrifice or limit your vision because of what you’ve been told. We’ve been made to believe we are not allowed or cannot have it all. Do not hold yourself back from your dreams. You can have
+
+them all.
+
+What the fuck does that even mean Kobe Bryant?
+
+You’re welcome.">
+
+            <div class="thought-text">Having it All</div>
+
+            <button class="close-btn" onclick="event.stopPropagation(); closeFocus();">&times;</button>
+
+        </div>
+
+
+    </div>
+
+    <script>
+
+        let focusedBubble = null;
+
+        let bubbles = [];
+
+        let animationId = null;
+
+        let isAnimating = false;
+
+        let lastTime = 0;
+
+        const ANIMATION_INTERVAL = 16; // ~60fps
+
+        class Bubble {
+
+            constructor(element, index) {
+
+                this.element = element;
+
+                this.index = index;
+
+                this.x = Math.random() * (window.innerWidth - 200) + 100;
+
+                this.y = Math.random() * (window.innerHeight - 200) + 100;
+
+                this.vx = (Math.random() - 0.5) * 1;
+
+                this.vy = (Math.random() - 0.5) * 1;
+
+                this.isPaused = false;
+
+                this.isDragging = false;
+
+                this.hasDragged = false;
+
+                this.dragOffset = { x: 0, y: 0 };
+
+                this.radius = 90;
+
+                this.isMoving = true;
+
+               
+
+                this.element.style.left = this.x + 'px';
+
+                this.element.style.top = this.y + 'px';
+
+               
+
+                this.setupEventListeners();
+
+            }
+
+           
+
+            setupEventListeners() {
+
+                this.element.addEventListener('mouseenter', () => {
+
+                    if (!focusedBubble) {
+
+                        this.isPaused = true;
+
+                        this.checkAnimationNeeded();
+
+                    }
+
+                });
+
+               
+
+                this.element.addEventListener('mouseleave', () => {
+
+                    if (!this.isDragging) {
+
+                        this.isPaused = false;
+
+                        this.isMoving = true;
+
+                        this.startAnimation();
+
+                    }
+
+                });
+
+               
+
+                this.element.addEventListener('mousedown', (e) => {
+
+                    if (!focusedBubble) {
+
+                        this.startDrag(e);
+
+                    }
+
+                });
+
+               
+
+                this.element.addEventListener('click', (e) => {
+
+                    if (!focusedBubble && !this.hasDragged) {
+
+                        e.stopPropagation();
+
+                        focusBubble(this.element, this.index);
+
+                    }
+
+                });
+
+            }
+
+           
+
+            startDrag(e) {
+
+                this.isDragging = true;
+
+                this.hasDragged = false;
+
+                this.isPaused = true;
+
+                this.element.style.cursor = 'grabbing';
+
+               
+
+                const rect = this.element.getBoundingClientRect();
+
+                this.dragOffset.x = e.clientX - rect.left - rect.width / 2;
+
+                this.dragOffset.y = e.clientY - rect.top - rect.height / 2;
+
+               
+
+                document.addEventListener('mousemove', this.onDrag);
+
+                document.addEventListener('mouseup', this.stopDrag);
+
+               
+
+                e.preventDefault();
+
+            }
+
+           
+
+            onDrag = (e) => {
+
+                if (!this.isDragging) return;
+
+               
+
+                this.hasDragged = true;
+
+               
+
+                this.x = e.clientX - this.dragOffset.x - 70;
+
+                this.y = e.clientY - this.dragOffset.y - 70;
+
+               
+
+                this.x = Math.max(75, Math.min(window.innerWidth - 75, this.x));
+
+                this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+
+               
+
+                this.element.style.transform = `translate(${this.x - parseFloat(this.element.style.left)}px, ${this.y - parseFloat(this.element.style.top)}px)`;
+
+            }
+
+           
+
+            stopDrag = () => {
+
+                if (!this.isDragging) return;
+
+               
+
+                this.isDragging = false;
+
+                this.isPaused = false;
+
+                this.element.style.cursor = 'pointer';
+
+               
+
+                requestAnimationFrame(() => {
+
+                    this.element.style.left = this.x + 'px';
+
+                    this.element.style.top = this.y + 'px';
+
+                    this.element.style.transform = '';
+
+                });
+
+               
+
+                document.removeEventListener('mousemove', this.onDrag);
+
+                document.removeEventListener('mouseup', this.stopDrag);
+
+               
+
+                setTimeout(() => {
+
+                    this.hasDragged = false;
+
+                }, 150);
+
+               
+
+                this.vx = (Math.random() - 0.5) * 1;
+
+                this.vy = (Math.random() - 0.5) * 1;
+
+                this.isMoving = true;
+
+                this.startAnimation();
+
+            }
+
+           
+
+            update() {
+
+                if (this.isPaused || focusedBubble || this.isDragging) {
+
+                    this.isMoving = false;
+
+                    return false;
+
+                }
+               
+                let moved = false;
+                
+
+               
+
+                // Only update if velocity is significant
+
+                if (Math.abs(this.vx) > 0.01 || Math.abs(this.vy) > 0.01) {
+
+                    this.x += this.vx;
+
+                    this.y += this.vy;
+
+                    moved = true;
+
+                   
+
+                    // Bounce off edges
+
+                    if (this.x <= this.radius || this.x >= window.innerWidth - this.radius) {
+
+                        this.vx *= -1; // Add slight damping
+
+                        this.x = Math.max(this.radius, Math.min(window.innerWidth - this.radius, this.x));
+
+                    }
+
+                    if (this.y <= 75 || this.y >= window.innerHeight - 75) {
+
+                        this.vy *= -1; // Add slight damping
+
+                        this.y = Math.max(75, Math.min(window.innerHeight - 75, this.y));
+
+                    }
+
+                   
+
+                   
+
+                    this.element.style.left = this.x + 'px';
+
+                    this.element.style.top = this.y + 'px';
+
+                }
+
+               
+
+                if (!moved) {
+
+                    this.isMoving = false;
+
+                }
+
+               
+
+                return moved;
+
+            }
+
+           
+
+            checkAnimationNeeded() {
+
+                const needsAnimation = bubbles.some(bubble =>
+
+                    bubble.isMoving && !bubble.isPaused && !bubble.isDragging
+
+                );
+
+               
+
+                if (!needsAnimation && isAnimating) {
+
+                    this.stopAnimation();
+
+                }
+
+            }
+
+           
+
+            startAnimation() {
+
+                if (!isAnimating) {
+
+                    isAnimating = true;
+
+                    animate();
+
+                }
+
+            }
+
+           
+
+            stopAnimation() {
+
+                if (animationId) {
+
+                    cancelAnimationFrame(animationId);
+
+                    animationId = null;
+
+                    isAnimating = false;
+
+                }
+
+            }
+
+        }
+
+        function animate(currentTime = 0) {
+
+            if (currentTime - lastTime >= ANIMATION_INTERVAL) {
+
+                let anyMoving = false;
+
+               
+
+                bubbles.forEach(bubble => {
+
+                    if (bubble.update()) {
+
+                        anyMoving = true;
+
+                    }
+
+                });
+
+               
+
+                // Stop animation if nothing is moving
+
+                if (!anyMoving && !focusedBubble) {
+
+                    isAnimating = false;
+
+                    return;
+
+                }
+
+               
+
+                lastTime = currentTime;
+
+            }
+
+           
+
+            if (isAnimating) {
+
+                animationId = requestAnimationFrame(animate);
+
+            }
+
+        }
+
+        function initializeBubbles() {
+
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+            bubbles = [];
+
+           
+
+            bubbleElements.forEach((element, index) => {
+
+                bubbles.push(new Bubble(element, index));
+
+            });
+
+           
+
+            // Start animation only if bubbles are moving
+
+            if (bubbles.some(bubble => bubble.isMoving)) {
+
+                isAnimating = true;
+
+                animate();
+
+            }
+
+        }
+
+        function focusBubble(bubble, index) {
+
+            if (focusedBubble) return;
+
+           
+
+            focusedBubble = bubble;
+
+            const overlay = document.getElementById('overlay');
+
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+            // Update URL with the thought title for sharing
+
+            const thoughtTitle = bubble.getAttribute('data-thought-title');
+
+            const urlSlug = thoughtTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+            window.history.pushState({ thoughtIndex: index }, '', `#${urlSlug}`);
+
+            // Update page title and OG meta tags for link previews
+            document.title = thoughtTitle;
+            document.querySelector('meta[property="og:title"]').setAttribute('content', thoughtTitle);
+            document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', thoughtTitle);
+
+            const content = bubble.getAttribute('data-thought-content');
+
+            if (content !== null) {
+
+                const thoughtTextDiv = bubble.querySelector('.thought-text');
+
+                if (thoughtTextDiv) {
+
+                    thoughtTextDiv.textContent = content;
+
+                }
+
+            }
+
+           
+
+            overlay.classList.add('active');
+
+            bubble.classList.add('focused');
+
+            document.body.style.overflow = 'auto';
+
+           
+
+            bubbleElements.forEach((otherBubble, otherIndex) => {
+
+                if (otherBubble !== bubble) {
+
+                    otherBubble.classList.add('minimized');
+
+                    repositionToCorner(otherBubble, otherIndex);
+
+                }
+
+            });
+
+           
+
+            // Stop animation when focused
+
+            bubbles.forEach(bubble => {
+
+                bubble.isMoving = false;
+
+                bubble.isPaused = true;
+
+            });
+
+           
+
+            if (isAnimating) {
+
+                isAnimating = false;
+
+                if (animationId) {
+
+                    cancelAnimationFrame(animationId);
+
+                    animationId = null;
+
+                }
+
+            }
+
+        }
+
+        function repositionToCorner(bubble, index) {
+
+            const positions = [
+
+                { x: 50, y: 100 },
+
+                { x: Math.max(50, window.innerWidth - 120), y: 100 },
+
+                { x: 50, y: Math.max(100, window.innerHeight - 120) },
+
+                { x: Math.max(50, window.innerWidth - 120), y: Math.max(100, window.innerHeight - 120) }
+
+            ];
+
+           
+
+            const pos = positions[index % positions.length];
+
+            bubble.style.left = pos.x + 'px';
+
+            bubble.style.top = pos.y + 'px';
+
+        }
+
+        function closeFocus() {
+
+            if (!focusedBubble) return;
+
+           
+
+            const overlay = document.getElementById('overlay');
+
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+           
+
+            // Clear URL hash when closing
+
+            window.history.pushState('', '', window.location.pathname);
+
+            // Reset title and OG meta tags
+            document.title = 'Shorter Thoughts';
+            document.querySelector('meta[property="og:title"]').setAttribute('content', 'Shorter Thoughts');
+            document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://alexanderatalla.com/shorterthoughts.html');
+            document.querySelector('meta[name="twitter:title"]').setAttribute('content', 'Shorter Thoughts');
+
+           
+
+            const contentAttr = focusedBubble.getAttribute('data-thought-content');
+
+            if (contentAttr !== null) {
+
+                const originalText = focusedBubble.dataset.thoughtTitle || '';
+
+                const thoughtTextDiv = focusedBubble.querySelector('.thought-text');
+
+                if (thoughtTextDiv) {
+
+                    thoughtTextDiv.textContent = originalText;
+
+                }
+
+            }
+
+           
+
+            overlay.classList.remove('active');
+
+            focusedBubble.classList.remove('focused');
+
+            document.body.style.overflow = 'hidden';
+
+           
+
+            bubbleElements.forEach((bubble) => {
+
+                bubble.classList.remove('minimized');
+
+            });
+
+           
+
+            focusedBubble = null;
+
+           
+
+            // Resume animation
+
+            bubbles.forEach(bubble => {
+
+                bubble.isPaused = false;
+
+                bubble.isMoving = true;
+
+            });
+
+           
+
+            if (!isAnimating) {
+
+                isAnimating = true;
+
+                animate();
+
+            }
+
+        }
+
+        // Function to handle direct links to thoughts
+
+        function handleDirectLink() {
+
+            const hash = window.location.hash.slice(1); // Remove the #
+
+            if (!hash) return;
+
+           
+
+            const bubbleElements = document.querySelectorAll('.thought-bubble');
+
+           
+
+            bubbleElements.forEach((bubble, index) => {
+
+                const thoughtTitle = bubble.getAttribute('data-thought-title');
+
+                const urlSlug = thoughtTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+               
+
+                if (urlSlug === hash) {
+
+                    // Small delay to ensure bubbles are initialized
+
+                    setTimeout(() => {
+
+                        focusBubble(bubble, index);
+
+                    }, 200);
+
+                }
+
+            });
+
+        }
+
+        // Handle browser back/forward buttons
+
+        window.addEventListener('popstate', (event) => {
+
+            if (focusedBubble && !window.location.hash) {
+
+                closeFocus();
+
+            } else if (!focusedBubble && window.location.hash) {
+
+                handleDirectLink();
+
+            }
+
+        });
+
+        // Event listeners
+
+        document.getElementById('overlay').addEventListener('click', closeFocus);
+
+        document.addEventListener('keydown', (e) => {
+
+            if (e.key === 'Escape') closeFocus();
+
+        });
+
+        // Handle window resize
+
+        window.addEventListener('resize', () => {
+
+            if (!focusedBubble) {
+
+                bubbles.forEach(bubble => {
+
+                    bubble.x = Math.min(bubble.x, window.innerWidth - bubble.radius);
+
+                    bubble.y = Math.min(bubble.y, window.innerHeight - bubble.radius);
+
+                });
+
+            }
+
+        });
+
+        // Initialize when page loads
+
+        window.addEventListener('load', () => {
+
+            // Small delay to ensure window dimensions are available
+
+            setTimeout(() => {
+
+                initializeBubbles();
+
+                // Handle direct links after initialization
+
+                handleDirectLink();
+
+            }, 100);
+
+        });
+
+    </script>
+
+</body>
+
+</html>

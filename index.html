@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Alexander Atalla</title>
+        <style>
+            body {
+                height: 110vh;
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: 'IBM Plex Mono', monospace;
+                font-weight: 350;
+            }
+
+            .content-container {
+                position: relative;
+                transform: rotate(3.2deg);
+                width: fit-content;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                align-items: center
+
+            }
+
+            .text-container {
+                
+                max-width: 425px;
+                text-align: center;
+                
+            }
+
+            img {
+                cursor: pointer;
+                height: 600px;
+                width: auto;
+                transition: transform 0.7s ease;
+                margin-left: 25px;
+            }
+
+            .content-container:hover img {
+                transform: scale(1.1);
+            }
+
+            a {
+                display: inline-block;
+                line-height: 0;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class="content-container">
+            <div class="text-container">
+                 
+            </div>
+            <a href="Main.html">
+                <img src="Me behind door spectroscopy.png">
+            </a>
+        </div>
+    </body>
+</html>

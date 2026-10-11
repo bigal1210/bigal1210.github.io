@@ -112,9 +112,23 @@
                     const match = /^assets\/textures\/([^/]+)\.png$/.exec(path);
                     if (match) artwork[match[1]] = blob(decode(bundle.files[path]), 'image/png');
                 }
+                let caterpillarHTML = '';
+                if (bundle.files['assets/shedding/index.html']) {
+                    const sheddingArtwork = {};
+                    for (const path of Object.keys(bundle.files)) {
+                        const match = /^assets\/shedding\/assets\/([^/]+)\.png$/.exec(path);
+                        if (match) sheddingArtwork[match[1] + '.png'] = blob(decode(bundle.files[path]), 'image/png');
+                    }
+                    caterpillarHTML = text(bundle.files['assets/shedding/index.html']);
+                    const stylesheet = blob(decode(bundle.files['assets/shedding/style.css']), 'text/css');
+                    caterpillarHTML = caterpillarHTML.replace(/href="style\.css[^"]*"/, `href="${stylesheet}"`);
+                    caterpillarHTML = caterpillarHTML.replace(/src="study\.js[^"]*"/, `src="${moduleURL('assets/shedding/study.js')}"`);
+                    const artworkSetup = `<script>globalThis.__sheddingArtwork = ${JSON.stringify(sheddingArtwork)};<\/script>`;
+                    caterpillarHTML = caterpillarHTML.replace('<head>', '<head>' + artworkSetup);
+                }
                 let html = bundle.html.replace(/<link\b[^>]*rel="preload"[^>]*>/g, '');
                 html = html.replace(/src="assets\/ramblings-page\.js[^\"]*"/, `src="${moduleURL('assets/ramblings-page.js')}"`);
-                const setup = `<script>globalThis.__ramblingsArtwork = ${JSON.stringify(artwork)};<\/script>`;
+                const setup = `<script>globalThis.__ramblingsArtwork = ${JSON.stringify(artwork)};globalThis.__ramblingsCaterpillarHTML = ${JSON.stringify(caterpillarHTML).replace(/</g, '\\u003c')};<\/script>`;
                 html = html.replace('<head>', '<head>' + setup);
                 try {
                     const bytes = new Uint8Array(await crypto.subtle.exportKey('raw', key));

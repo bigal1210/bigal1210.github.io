@@ -1,3 +1,4 @@
+import {readUnlock, rememberUnlock, forgetUnlock, verifyUnlock, canOpen} from './ramblings-session.js?v=persistent-1';
 // Reuse the existing encrypted credential probes; no plaintext passwords are stored.
 export function createObjectPasswordPrompt(){
  const style=document.createElement('style');
@@ -49,10 +50,10 @@ export function createObjectPasswordPrompt(){
    }
    if(token!==generation)return;
    if(!scope){status.textContent='That password didn’t open it. Try again.';return;}
-   if(scope==='home'&&!['baseball','caterpillar'].includes(slug)){status.textContent='That password doesn’t open this object.';return;}
+   if(!canOpen(scope,slug)){status.textContent='That password doesn’t open this object.';return;}
    const bytes=new Uint8Array(await crypto.subtle.exportKey('raw',credential.key));
    if(token!==generation)return;
-   sessionStorage.setItem('ramblings-unlock:v2',JSON.stringify({scope,salt:credential.salt,key:btoa(String.fromCharCode(...bytes))}));
+   rememberUnlock({scope,salt:credential.salt,key:btoa(String.fromCharCode(...bytes))});
    finish(true);
   }catch{
    if(token===generation)status.textContent=stage==='download'?'Couldn’t load the password check. Try again.':'That password didn’t open it. Try again.';
@@ -60,8 +61,21 @@ export function createObjectPasswordPrompt(){
    if(token===generation){busy=false;input.disabled=false;form.removeAttribute('aria-busy');input.focus();}
   }
  });
- return slug=>{
+ return async slug=>{
   if(request)finish(false);
+  const token=++generation,saved=readUnlock();
+  if(saved){
+   try{
+    const response=await fetch(new URL('../ramblings-access.json',import.meta.url),{cache:'no-store'});
+    if(!response.ok)throw new Error('Access information unavailable');
+    const access=await response.json();if(access.version!==1||!Array.isArray(access.scopes))throw new Error('Unsupported access information');
+    const verified=await verifyUnlock(access,saved);
+    if(token!==generation)return false;
+    if(!verified)forgetUnlock();
+    else if(canOpen(verified.scope,slug)){rememberUnlock(verified);return true;}
+   }catch{/* Keep saved access during a temporary network failure. */}
+  }
+  if(token!==generation)return false;
   return new Promise(resolve=>{generation++;request={slug,resolve,trigger:document.activeElement};status.textContent='';input.value='';input.disabled=false;modal.showModal();input.focus();});
  };
 }

@@ -40,17 +40,17 @@
         </form>
     </main>
     <script type="module">
+        import {readUnlock, rememberUnlock, forgetUnlock} from './assets/ramblings-session.js?v=persistent-1';
         const form = document.querySelector('#unlock');
         const input = document.querySelector('#password');
         const button = form.querySelector('button');
         const status = document.querySelector('#status');
         const decode = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
         const text = value => new TextDecoder().decode(decode(value));
-        // A tab-scoped unlock credential; never persist the typed password.
-        const sessionName = 'ramblings-unlock:v2';
+        // Remember a verified unlock across visits; never store the typed password.
         const legacySessionName = `ramblings-unlock:${location.pathname}`;
         function forgetSession() {
-            try { sessionStorage.removeItem(sessionName); sessionStorage.removeItem(legacySessionName); } catch {}
+            forgetUnlock(legacySessionName);
         }
         let busy = false;
         async function unlock(saved = null) {
@@ -146,9 +146,9 @@
                 html = html.replace('<head>', '<head>' + setup);
                 try {
                     const bytes = new Uint8Array(await crypto.subtle.exportKey('raw', key));
-                    sessionStorage.setItem(sessionName, JSON.stringify({
+                    rememberUnlock({
                         scope: scope.id, salt: payload.salt, key: btoa(String.fromCharCode(...bytes))
-                    }));
+                    });
                 } catch {
                     // Storage may be disabled; unlocking still works for this visit.
                 }
@@ -177,10 +177,7 @@
             event.preventDefault();
             unlock();
         });
-        let saved;
-        try {
-            saved = JSON.parse(sessionStorage.getItem(sessionName) || sessionStorage.getItem(legacySessionName));
-        } catch { forgetSession(); }
+        const saved = readUnlock(legacySessionName);
         if (saved) unlock(saved);
     </script>
 </body>

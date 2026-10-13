@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
-import { createObjectPasswordPrompt } from './object-password.js?v=password-line-1';
+import { createObjectPasswordPrompt } from './object-password.js?v=persistent-unlock-1';
 import { solarPosition, permittedLocation, SAN_FRANCISCO } from './sun-cycle.js';
 
 // A living monument. Each occupied position replaces one stone; new writing can

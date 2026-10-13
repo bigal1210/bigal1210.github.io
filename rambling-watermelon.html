@@ -47,9 +47,10 @@
         const decode = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
         const text = value => new TextDecoder().decode(decode(value));
         // A tab-scoped unlock credential; never persist the typed password.
-        const sessionName = `ramblings-unlock:${location.pathname}`;
+        const sessionName = 'ramblings-unlock:v2';
+        const legacySessionName = `ramblings-unlock:${location.pathname}`;
         function forgetSession() {
-            try { sessionStorage.removeItem(sessionName); } catch {}
+            try { sessionStorage.removeItem(sessionName); sessionStorage.removeItem(legacySessionName); } catch {}
         }
         let busy = false;
         async function unlock(saved = null) {
@@ -65,26 +66,36 @@
             const urls = [];
             let stage = 'download';
             try {
-                const response = await fetch('ramblings.encrypted.json', { cache: 'no-store' });
-                if (!response.ok) throw new Error('Could not download content');
-                const payload = await response.json();
-                if (payload.version !== 1 || payload.iterations !== 600000) throw new Error('Unsupported content');
+                const response = await fetch('ramblings-access.json', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Could not download access information');
+                const access = await response.json();
+                if (access.version !== 1 || !Array.isArray(access.scopes)) throw new Error('Unsupported access information');
                 stage = 'password';
-                let key;
-                if (saved) {
-                    if (saved.salt !== payload.salt) {
-                        forgetSession();
-                        status.textContent = '';
-                        return;
-                    }
-                    key = await crypto.subtle.importKey('raw', decode(saved.key), 'AES-GCM', true, ['decrypt']);
-                } else {
-                    const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(input.value), 'PBKDF2', false, ['deriveKey']);
-                    input.value = '';
-                    key = await crypto.subtle.deriveKey(
-                        { name: 'PBKDF2', salt: decode(payload.salt), iterations: payload.iterations, hash: 'SHA-256' },
-                        material, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+                let key, scope;
+                const material = saved ? null : await crypto.subtle.importKey('raw', new TextEncoder().encode(input.value), 'PBKDF2', false, ['deriveKey']);
+                input.value = '';
+                for (const candidate of access.scopes) {
+                    if (candidate.iterations !== 600000 || !['all', 'home'].includes(candidate.id)) continue;
+                    if (saved && saved.salt !== candidate.salt) continue;
+                    try {
+                        const trialKey = saved
+                            ? await crypto.subtle.importKey('raw', decode(saved.key), 'AES-GCM', true, ['decrypt'])
+                            : await crypto.subtle.deriveKey(
+                                { name: 'PBKDF2', salt: decode(candidate.salt), iterations: candidate.iterations, hash: 'SHA-256' },
+                                material, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+                        const proof = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: decode(candidate.probe.iv) }, trialKey, decode(candidate.probe.ciphertext));
+                        if (new TextDecoder().decode(proof) !== 'ramblings-access:' + candidate.id) continue;
+                        key = trialKey;
+                        scope = candidate;
+                        break;
+                    } catch { /* This credential does not unlock this scope. */ }
                 }
+                if (!scope) throw new Error('Incorrect password');
+                stage = 'download';
+                const content = await fetch(scope.file, { cache: 'no-store' });
+                if (!content.ok) throw new Error('Could not download content');
+                const payload = await content.json();
+                if (payload.version !== 1 || payload.iterations !== scope.iterations || payload.salt !== scope.salt) throw new Error('Unsupported content');
                 const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: decode(payload.iv) }, key, decode(payload.ciphertext));
                 stage = 'open';
                 const bundle = JSON.parse(new TextDecoder().decode(decrypted));
@@ -136,7 +147,7 @@
                 try {
                     const bytes = new Uint8Array(await crypto.subtle.exportKey('raw', key));
                     sessionStorage.setItem(sessionName, JSON.stringify({
-                        salt: payload.salt, key: btoa(String.fromCharCode(...bytes))
+                        scope: scope.id, salt: payload.salt, key: btoa(String.fromCharCode(...bytes))
                     }));
                 } catch {
                     // Storage may be disabled; unlocking still works for this visit.
@@ -165,7 +176,7 @@
         });
         let saved;
         try {
-            saved = JSON.parse(sessionStorage.getItem(sessionName));
+            saved = JSON.parse(sessionStorage.getItem(sessionName) || sessionStorage.getItem(legacySessionName));
         } catch { forgetSession(); }
         if (saved) unlock(saved);
     </script>

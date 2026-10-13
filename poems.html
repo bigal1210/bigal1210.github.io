@@ -4,12 +4,10 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
     <title>Poems</title>
     <meta property="og:title" content="Poems">
-    <meta property="og:image" content="https://alexanderatalla.com/preview.jpg">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://alexanderatalla.com/poems.html">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Poems">
-    <meta name="twitter:image" content="https://alexanderatalla.com/preview.jpg">
     <style>
     
         * {
@@ -95,6 +93,8 @@
         }
 
     </style>
+<link id="preview-icon" rel="icon" type="image/png" sizes="180x180" href="/assets/icons/page-90acf9d14a.png">
+<link id="preview-touch-icon" rel="apple-touch-icon" sizes="180x180" href="/assets/icons/page-90acf9d14a.png">
 </head>
 <body>
     <a href="/Main.html" class="home-nav">
@@ -539,13 +539,13 @@ the way to do is to be.
             updateURL(poem.id);
 
             // Update OG meta tags for link previews
-            const imageUrl = 'https://alexanderatalla.com/' + encodeURIComponent(poem.src);
+            const iconUrl = {"Me behind door spectroscopy.png": "/assets/icons/page-72fd41b271.png", "hair dresser.jpeg": "/assets/icons/page-19c5e08a0a.png", "huck finn and monkey.png": "/assets/icons/page-6159181023.png", "Huxley.jpg": "/assets/icons/page-87023fac8c.png", "tyler.jpg": "/assets/icons/page-c35f1d0f57.png", "laotzu.jpg": "/assets/icons/page-de12497a06.png", "gravity and space.jpg": "/assets/icons/page-d511ba9310.png", "i-feel.jpg": "/assets/icons/page-cb6f6fd39e.png", "time painting.jpg": "/assets/icons/page-de320bae81.png", "playing cards.jpg": "/assets/icons/page-874ba407c9.png", "DawnFM.jpg": "/assets/icons/page-9a178f77cc.png", "west facing roads.jpg": "/assets/icons/page-90357f1370.png", "learning.jpeg": "/assets/icons/page-a8dcba2f57.png", "murad.JPG": "/assets/icons/page-f1d093c9d4.png", "wild-blue.png": "/assets/icons/page-600416858d.png", "preview.jpg": "/assets/icons/page-90acf9d14a.png"}[poem.src];
             document.title = poem.title;
             document.querySelector('meta[property="og:title"]').setAttribute('content', poem.title);
-            document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+            document.getElementById('preview-icon').href = iconUrl;
             document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://alexanderatalla.com/poems.html?poem=' + poem.id);
             document.querySelector('meta[name="twitter:title"]').setAttribute('content', poem.title);
-            document.querySelector('meta[name="twitter:image"]').setAttribute('content', imageUrl);
+            document.getElementById('preview-touch-icon').href = iconUrl;
         }
 
         function previousImage() {

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
     <title>Poems</title>
     <meta property="og:title" content="Poems">
@@ -60,9 +59,6 @@
             cursor: pointer;
         }
 
-        .poem-artwork { position: relative; width: 250px; height: 250px; flex-shrink: 0; }
-        .poem-artwork > img { display: block; }
-
         button {
             font-size: 24px;
             cursor: pointer;
@@ -107,9 +103,7 @@
     <div class="container">
         <div class="carousel">
             <button onclick="previousImage()">&#60;</button>
-            <div class="poem-artwork">
-                <img id="mainImage" src="/gravity%20and%20space.jpg" onclick="imageClicked()">
-            </div>
+            <img id="mainImage" src="/gravity%20and%20space.jpg" onclick="imageClicked()">
             <button onclick="nextImage()">&#62;</button>
         </div>
         <h2 id="imageTitle">The Best Way to Spend 4 Years</h2>
@@ -377,30 +371,6 @@ The silent rustlings of my mind.
 
 8.16.26`
             },
-            {
-                id: 'can-we-sit',
-                src: "can-we-sit-photo.jpg",
-                title: "Can We Sit",
-                alt: "A notebook page with the handwritten draft of Can We Sit and a sketch of chairs beside a fireplace.",
-                poem: `Can we sit.
-It’s all I ask,
-Side by side
-Heart to heart
-Mask to mask.
-
-We can sit
-With one another
-Kindling together
-By the fire.
-
-This love we have,
-Will it last forever?
-Just long enough.
-Sit here quietly
-By the fire.
-
-9.21.26`
-            },
             /*{
                 id: 'wild-blue-2',
                 src: "wild-blue.png",
@@ -562,7 +532,6 @@ the way to do is to be.
             currentImage = index !== undefined ? index : currentImage;
             const poem = images[currentImage];
             document.getElementById('mainImage').src = '/' + encodeURIComponent(poem.src);
-            document.getElementById('mainImage').alt = poem.alt || poem.title;
             document.getElementById('imageTitle').textContent = poem.title;
             document.getElementById('poemText').textContent = poem.poem;
 
@@ -570,7 +539,7 @@ the way to do is to be.
             updateURL(poem.id);
 
             // Update OG meta tags for link previews
-            const iconUrl = {"can-we-sit-photo.jpg": "/assets/icons/can-we-sit-photo.png", "Me behind door spectroscopy.png": "/assets/icons/page-72fd41b271.png", "hair dresser.jpeg": "/assets/icons/page-19c5e08a0a.png", "huck finn and monkey.png": "/assets/icons/page-6159181023.png", "Huxley.jpg": "/assets/icons/page-87023fac8c.png", "tyler.jpg": "/assets/icons/page-c35f1d0f57.png", "laotzu.jpg": "/assets/icons/page-de12497a06.png", "gravity and space.jpg": "/assets/icons/page-d511ba9310.png", "i-feel.jpg": "/assets/icons/page-cb6f6fd39e.png", "time painting.jpg": "/assets/icons/page-de320bae81.png", "playing cards.jpg": "/assets/icons/page-874ba407c9.png", "DawnFM.jpg": "/assets/icons/page-9a178f77cc.png", "west facing roads.jpg": "/assets/icons/page-90357f1370.png", "learning.jpeg": "/assets/icons/page-a8dcba2f57.png", "murad.JPG": "/assets/icons/page-f1d093c9d4.png", "wild-blue.png": "/assets/icons/page-600416858d.png", "preview.jpg": "/assets/icons/page-90acf9d14a.png"}[poem.src];
+            const iconUrl = {"Me behind door spectroscopy.png": "/assets/icons/page-72fd41b271.png", "hair dresser.jpeg": "/assets/icons/page-19c5e08a0a.png", "huck finn and monkey.png": "/assets/icons/page-6159181023.png", "Huxley.jpg": "/assets/icons/page-87023fac8c.png", "tyler.jpg": "/assets/icons/page-c35f1d0f57.png", "laotzu.jpg": "/assets/icons/page-de12497a06.png", "gravity and space.jpg": "/assets/icons/page-d511ba9310.png", "i-feel.jpg": "/assets/icons/page-cb6f6fd39e.png", "time painting.jpg": "/assets/icons/page-de320bae81.png", "playing cards.jpg": "/assets/icons/page-874ba407c9.png", "DawnFM.jpg": "/assets/icons/page-9a178f77cc.png", "west facing roads.jpg": "/assets/icons/page-90357f1370.png", "learning.jpeg": "/assets/icons/page-a8dcba2f57.png", "murad.JPG": "/assets/icons/page-f1d093c9d4.png", "wild-blue.png": "/assets/icons/page-600416858d.png", "preview.jpg": "/assets/icons/page-90acf9d14a.png"}[poem.src];
             document.title = poem.title;
             document.querySelector('meta[property="og:title"]').setAttribute('content', poem.title);
             document.getElementById('preview-icon').href = iconUrl;

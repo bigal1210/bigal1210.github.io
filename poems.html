@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
     <title>Poems</title>
     <meta property="og:title" content="Poems">
@@ -9,6 +10,8 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Poems">
     <style>
+        [hidden] { display: none !important; }
+        #private-poem-status { max-width: 300px; text-align: center; font-size: 13px; line-height: 1.7; }
     
         * {
             font-family: 'IBM Plex Mono', monospace;
@@ -108,6 +111,7 @@
         </div>
         <h2 id="imageTitle">The Best Way to Spend 4 Years</h2>
         <div id="poemText" class="poem"></div>
+        <p id="private-poem-status" hidden>Unlock <a href="/nothinghereyet.html">Ramblings</a> to view this poem.<br><a href="/poems.html">View other poems</a></p>
     </div>
 
     <script>
@@ -509,7 +513,51 @@ the way to do is to be.
             }
         ];
 
+        const publicImages = images.slice();
         let currentImage = 0;
+        let privatePoems = {poems:[], dispose(){}};
+        let refreshGeneration = 0;
+        let initialized = false;
+        const initialPoemId = new URLSearchParams(location.search).get('poem');
+        function selectedPoemId() {
+            return new URLSearchParams(location.search).get('poem') ||
+                /^\/p\/([^/]+)\.html$/.exec(location.pathname)?.[1];
+        }
+        function showLockedPoem() {
+            document.querySelector('.carousel').hidden = true;
+            document.getElementById('imageTitle').hidden = true;
+            document.getElementById('imageTitle').textContent = '';
+            document.getElementById('poemText').textContent = '';
+            document.getElementById('mainImage').removeAttribute('src');
+            document.getElementById('private-poem-status').hidden = false;
+            document.title = 'Poems';
+            for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) document.querySelector(selector).content = 'Poems';
+            document.getElementById('preview-icon').href = '/assets/icons/page-90acf9d14a.png';
+            document.getElementById('preview-touch-icon').href = '/assets/icons/page-90acf9d14a.png';
+            history.replaceState({poemId:'can-we-sit'}, '', '/p/can-we-sit.html');
+        }
+        async function refreshProtectedPoems() {
+            const generation = ++refreshGeneration;
+            let loaded;
+            try {
+                const {loadProtectedPoems} = await import('/assets/protected-poems.js?v=1');
+                loaded = await loadProtectedPoems();
+            } catch { loaded = {poems:[], dispose(){}}; }
+            if (generation !== refreshGeneration) { loaded.dispose(); return; }
+            const requested = selectedPoemId() || (!initialized ? initialPoemId : images[currentImage]?.id);
+            const old = privatePoems;
+            privatePoems = loaded;
+            images.splice(0, images.length, ...publicImages);
+            for (const poem of loaded.poems) {
+                const after = images.findIndex(item => item.id === poem.after);
+                images.splice(after < 0 ? images.length : after + 1, 0, poem);
+            }
+            const index = getImageIndexById(requested);
+            if (requested === 'can-we-sit' && index < 0) showLockedPoem();
+            else updateImage(index < 0 ? 0 : index, true);
+            old.dispose();
+            initialized = true;
+        }
 
         // Function to find poem by ID
         function getImageIndexById(id) {
@@ -522,24 +570,28 @@ the way to do is to be.
         }
 
         // Function to update URL when poem changes
-        function updateURL(poemId) {
+        function updateURL(poemId, replace = false) {
             const newURL = `/p/${slugify(poemId)}.html`;
-            window.history.pushState({ poemId }, '', newURL);
+            window.history[replace ? 'replaceState' : 'pushState']({ poemId }, '', newURL);
         }
 
         // Function to update display with current poem
-        function updateImage(index) {
+        function updateImage(index, replace = false) {
+            document.querySelector('.carousel').hidden = false;
+            document.getElementById('imageTitle').hidden = false;
+            document.getElementById('private-poem-status').hidden = true;
             currentImage = index !== undefined ? index : currentImage;
             const poem = images[currentImage];
-            document.getElementById('mainImage').src = '/' + encodeURIComponent(poem.src);
+            document.getElementById('mainImage').src = poem.imageUrl || '/' + encodeURIComponent(poem.src);
+            document.getElementById('mainImage').alt = poem.alt || poem.title;
             document.getElementById('imageTitle').textContent = poem.title;
             document.getElementById('poemText').textContent = poem.poem;
 
             // Update URL with current poem ID
-            updateURL(poem.id);
+            updateURL(poem.id, replace);
 
             // Update OG meta tags for link previews
-            const iconUrl = {"Me behind door spectroscopy.png": "/assets/icons/page-72fd41b271.png", "hair dresser.jpeg": "/assets/icons/page-19c5e08a0a.png", "huck finn and monkey.png": "/assets/icons/page-6159181023.png", "Huxley.jpg": "/assets/icons/page-87023fac8c.png", "tyler.jpg": "/assets/icons/page-c35f1d0f57.png", "laotzu.jpg": "/assets/icons/page-de12497a06.png", "gravity and space.jpg": "/assets/icons/page-d511ba9310.png", "i-feel.jpg": "/assets/icons/page-cb6f6fd39e.png", "time painting.jpg": "/assets/icons/page-de320bae81.png", "playing cards.jpg": "/assets/icons/page-874ba407c9.png", "DawnFM.jpg": "/assets/icons/page-9a178f77cc.png", "west facing roads.jpg": "/assets/icons/page-90357f1370.png", "learning.jpeg": "/assets/icons/page-a8dcba2f57.png", "murad.JPG": "/assets/icons/page-f1d093c9d4.png", "wild-blue.png": "/assets/icons/page-600416858d.png", "preview.jpg": "/assets/icons/page-90acf9d14a.png"}[poem.src];
+            const iconUrl = poem.iconUrl || {"Me behind door spectroscopy.png": "/assets/icons/page-72fd41b271.png", "hair dresser.jpeg": "/assets/icons/page-19c5e08a0a.png", "huck finn and monkey.png": "/assets/icons/page-6159181023.png", "Huxley.jpg": "/assets/icons/page-87023fac8c.png", "tyler.jpg": "/assets/icons/page-c35f1d0f57.png", "laotzu.jpg": "/assets/icons/page-de12497a06.png", "gravity and space.jpg": "/assets/icons/page-d511ba9310.png", "i-feel.jpg": "/assets/icons/page-cb6f6fd39e.png", "time painting.jpg": "/assets/icons/page-de320bae81.png", "playing cards.jpg": "/assets/icons/page-874ba407c9.png", "DawnFM.jpg": "/assets/icons/page-9a178f77cc.png", "west facing roads.jpg": "/assets/icons/page-90357f1370.png", "learning.jpeg": "/assets/icons/page-a8dcba2f57.png", "murad.JPG": "/assets/icons/page-f1d093c9d4.png", "wild-blue.png": "/assets/icons/page-600416858d.png", "preview.jpg": "/assets/icons/page-90acf9d14a.png"}[poem.src];
             document.title = poem.title;
             document.querySelector('meta[property="og:title"]').setAttribute('content', poem.title);
             document.getElementById('preview-icon').href = iconUrl;
@@ -562,31 +614,17 @@ the way to do is to be.
             console.log('Image clicked!');
         }
 
-        // Initialize based on URL parameters
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const poemId = urlParams.get('poem');
-            
-            if (poemId) {
-                const index = getImageIndexById(poemId);
-                if (index !== -1) {
-                    updateImage(index);
-                    return;
-                }
-            }
-            
-            // If no valid poem ID in URL, start with first poem
-            updateImage(0);
+        window.addEventListener('load', refreshProtectedPoems);
+        window.addEventListener('pageshow', event => { if (event.persisted) refreshProtectedPoems(); });
+        window.addEventListener('focus', () => { if (initialized) refreshProtectedPoems(); });
+        window.addEventListener('storage', event => {
+            if (!event.key || event.key === 'ramblings-unlock:v2') refreshProtectedPoems();
         });
-
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.poemId) {
-                const index = getImageIndexById(event.state.poemId);
-                if (index !== -1) {
-                    updateImage(index);
-                }
-            }
+        window.addEventListener('popstate', () => {
+            const id = selectedPoemId();
+            const index = getImageIndexById(id);
+            if (id === 'can-we-sit' && index < 0) showLockedPoem();
+            else updateImage(index < 0 ? 0 : index, true);
         });
     </script>
 </body>

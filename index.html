@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8">
         <title>Alexander Atalla</title>
+        <link rel="preload" as="image" type="image/webp"
+              href="assets/home/door-450.webp"
+              imagesrcset="assets/home/door-450.webp 1x, assets/home/door-900.webp 2x, assets/home/door-1350.webp 3x"
+              fetchpriority="high">
         <style>
             body {
                 height: 110vh;
@@ -59,7 +64,11 @@
                  
             </div>
             <a href="Main.html">
-                <img src="Me behind door spectroscopy.png">
+                <img src="assets/home/door-450.webp"
+                     srcset="assets/home/door-450.webp 1x, assets/home/door-900.webp 2x, assets/home/door-1350.webp 3x"
+                     width="450" height="600"
+                     alt="Alexander behind a door — enter the website"
+                     fetchpriority="high" loading="eager" decoding="async">
             </a>
         </div>
     </body>

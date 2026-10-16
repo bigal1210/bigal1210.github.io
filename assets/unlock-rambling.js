@@ -118,7 +118,11 @@ import {fetchEncryptedArtwork} from './encrypted-artwork.js?v=split-1';
                 }
                 if (requestedObject === 'watermelon') {
                     // Own touch gestures rather than handing vertical drags to Safari.
-                    html = html.replace('<head>', '<head><meta name="theme-color" content="#ffffff"><style>html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#fff}body{position:fixed;inset:0;width:100%}main,#scene{height:100%;height:100dvh}#scene canvas{touch-action:none}</style>');
+                    html = html.replace('<head>', '<head><meta name="theme-color" content="#ffffff"><meta name="color-scheme" content="light"><style>html{color-scheme:light}html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#fff}body{position:fixed;inset:0;width:100%}main,#scene{height:100%;height:100dvh}#scene canvas{touch-action:none}</style>');
+                }
+                if (requestedObject === 'watermelon' && new URL(location.href).searchParams.get('from') === 'stones') {
+                    html = html.replace(/<header>[\s\S]*?<\/header>/, '<header><a href="nothinghereyet.html" aria-label="Back to stones">←</a></header>');
+                    html = html.replace('<head>', '<head><style>#object-nav,.hint{display:none!important}</style>');
                 }
                 if (new URL(location.href).searchParams.has('embedded')) {
                     html = html.replace('<head>', '<head><style>body>header,#object-nav,.hint{display:none!important}</style>');

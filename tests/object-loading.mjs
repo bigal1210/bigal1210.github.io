@@ -6,9 +6,9 @@ const requestSource=source.slice(source.indexOf('async function requestReading('
 let release,checks=0,shows=0;
 const dialog={open:false,removeAttribute(){},showModal(){this.open=true;shows++;},inert:true};
 const status={textContent:'',hidden:true};
-const context=vm.createContext({setReadingAppearance(){},dialog,opening:false,tooltip:{},document:{activeElement:{}},openingStatus:status,mount:{setAttribute(){},removeAttribute(){}},askPassword:()=>{checks++;return new Promise(resolve=>release=resolve);}});
+const context=vm.createContext({dialog,opening:false,tooltip:{},document:{activeElement:{}},openingStatus:status,mount:{setAttribute(){},removeAttribute(){}},askPassword:()=>{checks++;return new Promise(resolve=>release=resolve);}});
 vm.runInContext(requestSource,context);
-const first=vm.runInContext("requestReading('watermelon')",context);
+const first=vm.runInContext("requestReading('baseball')",context);
 assert.equal(status.hidden,false);
 assert.equal(status.textContent,'Opening artwork…');
 await vm.runInContext("requestReading('baseball')",context);
@@ -22,6 +22,13 @@ context.askPassword=async()=>{throw new Error('network');};
 await vm.runInContext("requestReading('baseball')",context);
 assert.equal(context.opening,false,'Failure must permit retry');
 assert.match(status.textContent,/try again/);assert.equal(status.hidden,false);
+// Watermelon must navigate out of the tan gallery instead of opening a modal iframe.
+let destination;
+context.URL=URL;context.location={href:'https://example.test/nothinghereyet.html',assign(url){destination=url;}};
+context.askPassword=async()=>true;
+await vm.runInContext("requestReading('watermelon')",context);
+assert.equal(destination,'https://example.test/rambling-watermelon.html?from=stones');
+assert.equal(shows,1,'Watermelon must not create another gallery modal');
 // Reopening must reuse the exact rendered frame, without creating another iframe.
 const cached={hidden:true,contentWindow:{location:{pathname:"/rambling-watermelon.html"}}};let created=0;
 const cacheContext=vm.createContext({readyFrames:new Map([['watermelon',cached]]),dialog:{querySelectorAll:()=>[cached],setAttribute(){}},document:{createElement(){created++;throw new Error('Unexpected iframe creation');}}});

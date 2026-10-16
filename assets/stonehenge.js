@@ -8,7 +8,6 @@ const INK = 0x372a24, PAPER = 0xf3eadb;
 const mount = document.querySelector('#scene');
 const style = document.createElement('style');
 style.textContent = `
-html[data-reading="watermelon"],html[data-reading="watermelon"] body{background:#fff!important;overscroll-behavior:none}
 body{background:#f3eadb;color:#47372c}header{z-index:4}header h1{letter-spacing:.16em;text-transform:uppercase;font-size:10px}
 #scene{position:fixed;inset:0;touch-action:none}#scene canvas{touch-action:none;outline:none}#scene canvas:focus-visible{outline:1px dashed #79644f;outline-offset:-8px}
 .paper-grain{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.12;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%239a8165' filter='url(%23n)' opacity='.5' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
@@ -215,25 +214,7 @@ openingStatus.setAttribute('role','status');openingStatus.setAttribute('aria-liv
 openingStatus.style.cssText='position:fixed;bottom:65px;left:20px;right:20px;text-align:center;z-index:5;font-size:12px;pointer-events:none';
 openingStatus.hidden=true;document.body.append(openingStatus);
 let opening=false;
-let readingTheme=null;
-function setReadingAppearance(slug){
- if(slug==='watermelon'){
-  document.documentElement.dataset.reading=slug;
-  const meta=document.querySelector('meta[name="theme-color"]');
-  readingTheme={meta,content:meta?.getAttribute('content')};
-  const theme=meta??document.createElement('meta');theme.name='theme-color';theme.content='#ffffff';
-  if(!meta)document.head.append(theme);
-  readingTheme.active=theme;
- }else{
-  delete document.documentElement.dataset.reading;
-  if(readingTheme){
-   if(readingTheme.meta){if(readingTheme.content===null)readingTheme.meta.removeAttribute('content');else readingTheme.meta.content=readingTheme.content;}
-   else readingTheme.active.remove();
-   readingTheme=null;
-  }
- }
-}
-const askPassword=createObjectPasswordPrompt({prepare:prepareReading});
+const askPassword=createObjectPasswordPrompt({prepare:(slug,signal)=>slug==='watermelon'?Promise.resolve():prepareReading(slug,signal)});
 async function requestReading(slug){
  if(opening||dialog.open)return;
  opening=true;tooltip.hidden=true;
@@ -242,10 +223,14 @@ async function requestReading(slug){
  mount.setAttribute('aria-busy','true');
  try{
   if(await askPassword(slug)){
+   // A top-level white document prevents Safari tinting from the tan gallery behind an iframe.
+   if(slug==='watermelon'){
+    location.assign(new URL('rambling-watermelon.html?from=stones',location.href).href);
+    return;
+   }
    returnFocus=trigger;
    dialog.removeAttribute('data-preloading');dialog.removeAttribute('aria-hidden');dialog.inert=false;
    dialog.showModal();
-   setReadingAppearance(slug);
   }
  }catch{
   openingStatus.textContent='Couldn’t open the artwork. Please try again.';
@@ -309,7 +294,7 @@ function prepareReading(slug,signal){
 }
 document.querySelectorAll('[data-read]').forEach(b=>b.addEventListener('click',()=>requestReading(b.dataset.read)));
 document.querySelector('#close-reading').addEventListener('click',()=>dialog.close());
-dialog.addEventListener('close',()=>{setReadingAppearance(null);for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;preparedFrame=null;returnFocus?.focus();});
+dialog.addEventListener('close',()=>{for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;preparedFrame=null;returnFocus?.focus();});
 document.querySelector('#reset-view').addEventListener('click',home);
 document.querySelector('#loading').hidden=true;
 let last=0;

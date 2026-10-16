@@ -237,7 +237,13 @@ async function requestReading(slug){
 function prepareReading(slug,signal){
  const labels={watermelon:'Watermelon',baseball:'Baseball',caterpillar:'You misunderstand me'};
  for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;
- const cached=readyFrames.get(slug);
+ let cached=readyFrames.get(slug);
+ // A reader may navigate inside a retained frame. Do not reuse it as the old object.
+ if(cached){
+  let current;
+  try{current=cached.contentWindow.location.pathname.match(/rambling-(watermelon|baseball|caterpillar)\.html$/)?.[1];}catch{current='unknown';}
+  if(current&&current!==slug){cached.remove();readyFrames.delete(slug);cached=null;}
+ }
  if(cached){cached.hidden=false;preparedFrame=cached;dialog.setAttribute('aria-label',labels[slug]);return Promise.resolve();}
  const frame=document.createElement('iframe');preparedFrame=frame;
  frame.title=labels[slug]+' — interactive rambling';dialog.setAttribute('aria-label',labels[slug]);

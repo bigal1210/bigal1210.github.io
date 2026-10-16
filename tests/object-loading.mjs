@@ -23,7 +23,7 @@ await vm.runInContext("requestReading('baseball')",context);
 assert.equal(context.opening,false,'Failure must permit retry');
 assert.match(status.textContent,/try again/);assert.equal(status.hidden,false);
 // Reopening must reuse the exact rendered frame, without creating another iframe.
-const cached={hidden:true};let created=0;
+const cached={hidden:true,contentWindow:{location:{pathname:"/rambling-watermelon.html"}}};let created=0;
 const cacheContext=vm.createContext({readyFrames:new Map([['watermelon',cached]]),dialog:{querySelectorAll:()=>[cached],setAttribute(){}},document:{createElement(){created++;throw new Error('Unexpected iframe creation');}}});
 const prepareSource=source.slice(source.indexOf('function prepareReading('),source.indexOf("document.querySelectorAll('[data-read]')"));
 vm.runInContext(prepareSource,cacheContext);

@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three/three.module.js';
-import { createObjectPasswordPrompt } from './object-password.js?v=ready-transition-1';
+import { createObjectPasswordPrompt } from './object-password.js?v=object-loading-2';
 import { solarPosition, permittedLocation, SAN_FRANCISCO } from './sun-cycle.js';
 
 // A living monument. Each occupied position replaces one stone; new writing can
@@ -13,7 +13,7 @@ body{background:#f3eadb;color:#47372c}header{z-index:4}header h1{letter-spacing:
 .paper-grain{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.12;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%239a8165' filter='url(%23n)' opacity='.5' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
 .world-footer{justify-content:flex-end!important;position:fixed;bottom:27px;left:30px;right:30px;z-index:4;display:flex;align-items:end;justify-content:space-between;gap:20px;font-size:10px;line-height:1.9;letter-spacing:.035em}.world-footer p{margin:0;color:#897865}.world-footer nav{display:flex;gap:20px}button.world-button{font:inherit;color:inherit;border:0;background:none;padding:7px 0;cursor:pointer}button.world-button:hover{text-decoration:underline;text-underline-offset:5px}button:focus-visible{outline:1px dashed #685445;outline-offset:5px}.world-title{position:fixed;left:36px;top:95px;z-index:3;pointer-events:none}.world-title span{font-size:9px;letter-spacing:.19em;text-transform:uppercase;color:#8d7a63}.world-title h2{font-family:Georgia,serif;font-size:32px;line-height:1.2;font-weight:400;margin:9px 0;color:#554334}.world-title p{font-size:10px;color:#917c64;margin:0}
 #world-tooltip{position:fixed;z-index:5;pointer-events:none;background:#f6efdfec;border:1px solid #bbae99;padding:8px 12px;font-size:10px;box-shadow:0 2px 12px #48331a0c}
-#reading{position:fixed;inset:0;margin:0;padding:0;border:0;background:#fff;color:#47372c;width:100vw;height:100svh;max-width:none;max-height:none;overflow:hidden;box-shadow:none}#reading[data-preloading]{display:block;opacity:0;pointer-events:none;z-index:-1}#reading::backdrop{background:#fff}#reading iframe{display:block;width:100%;height:100%;border:0;background:#fff}#reading #close-reading{position:absolute;top:32px;left:36px;z-index:2;padding:0;border:0;border-radius:0;background:none;color:#47372c;font:inherit;font-size:12px;line-height:normal}#reading #close-reading::after{content:'';position:absolute;inset:-12px}#reading #close-reading:hover{text-decoration:none}@media(max-width:600px){#reading #close-reading{top:24px;left:22px}}#reading #close-reading:focus,#reading #close-reading:focus-visible{outline:none;box-shadow:none}.hint{display:none}
+#reading{position:fixed;inset:0;margin:0;padding:0;border:0;background:#fff;color:#47372c;width:100vw;height:100svh;max-width:none;max-height:none;overflow:hidden;box-shadow:none}#reading[data-preloading]{display:block;opacity:0;pointer-events:none;z-index:-1}#reading::backdrop{background:#fff}#reading iframe[hidden]{display:none}#reading iframe{display:block;width:100%;height:100%;border:0;background:#fff}#reading #close-reading{position:absolute;top:32px;left:36px;z-index:2;padding:0;border:0;border-radius:0;background:none;color:#47372c;font:inherit;font-size:12px;line-height:normal}#reading #close-reading::after{content:'';position:absolute;inset:-12px}#reading #close-reading:hover{text-decoration:none}@media(max-width:600px){#reading #close-reading{top:24px;left:22px}}#reading #close-reading:focus,#reading #close-reading:focus-visible{outline:none;box-shadow:none}.hint{display:none}
 
 @media(max-width:600px){.world-title{left:22px;top:78px}.world-title h2{font-size:25px}.world-title p{font-size:9px}.world-footer{left:22px;right:22px;bottom:18px;flex-wrap:wrap;gap:4px}.world-footer nav{gap:17px}.world-footer p{width:100%}#reading{width:100vw;height:100svh;border:0}.reading-bar{padding:0 15px!important}}
 `;
@@ -208,25 +208,44 @@ function pick(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r
 function hover(e){const obj=pick(e);canvas.style.cursor=obj?'pointer':'grab';tooltip.hidden=!obj;if(obj){tooltip.textContent=obj.userData.label+' ↗';tooltip.style.left=Math.min(innerWidth-190,e.clientX+16)+'px';tooltip.style.top=Math.max(12,e.clientY-36)+'px';}}
 canvas.addEventListener('pointerleave',()=>{tooltip.hidden=true;});
 const dialog=document.querySelector('#reading');let returnFocus=null,preparedFrame=null;
+const readyFrames=new Map();
+const openingStatus=document.createElement('p');
+openingStatus.setAttribute('role','status');openingStatus.setAttribute('aria-live','polite');
+openingStatus.style.cssText='position:fixed;bottom:65px;left:20px;right:20px;text-align:center;z-index:5;font-size:12px;pointer-events:none';
+openingStatus.hidden=true;document.body.append(openingStatus);
+let opening=false;
 const askPassword=createObjectPasswordPrompt({prepare:prepareReading});
 async function requestReading(slug){
- tooltip.hidden=true;const trigger=document.activeElement;
- if(await askPassword(slug)){
-  returnFocus=trigger;
-  dialog.removeAttribute('data-preloading');dialog.removeAttribute('aria-hidden');dialog.inert=false;
-  dialog.showModal();
+ if(opening||dialog.open)return;
+ opening=true;tooltip.hidden=true;
+ const trigger=document.activeElement;
+ openingStatus.textContent='Opening artwork…';openingStatus.hidden=false;
+ mount.setAttribute('aria-busy','true');
+ try{
+  if(await askPassword(slug)){
+   returnFocus=trigger;
+   dialog.removeAttribute('data-preloading');dialog.removeAttribute('aria-hidden');dialog.inert=false;
+   dialog.showModal();
+  }
+ }catch{
+  openingStatus.textContent='Couldn’t open the artwork. Please try again.';
+ }finally{
+  opening=false;mount.removeAttribute('aria-busy');
+  if(openingStatus.textContent==='Opening artwork…')openingStatus.hidden=true;
  }
 }
 function prepareReading(slug,signal){
  const labels={watermelon:'Watermelon',baseball:'Baseball',caterpillar:'You misunderstand me'};
- dialog.querySelector('iframe')?.remove();
+ for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;
+ const cached=readyFrames.get(slug);
+ if(cached){cached.hidden=false;preparedFrame=cached;dialog.setAttribute('aria-label',labels[slug]);return Promise.resolve();}
  const frame=document.createElement('iframe');preparedFrame=frame;
  frame.title=labels[slug]+' — interactive rambling';dialog.setAttribute('aria-label',labels[slug]);
  dialog.dataset.preloading='true';dialog.setAttribute('aria-hidden','true');dialog.inert=true;
  const url=new URL('ramblings-content.html',location.href);url.searchParams.set('object',slug);url.searchParams.set('embedded','1');frame.src=url.href;
  return new Promise((resolve,reject)=>{
   let raf=0,settled=false;
-  const timeout=setTimeout(()=>finish(new Error('Artwork timed out')),45000);
+  const timeout=setTimeout(()=>finish(new Error('Artwork timed out')),90000);
   const abort=()=>finish(new DOMException('Canceled','AbortError'));
   function finish(error){
    if(settled)return;settled=true;clearTimeout(timeout);cancelAnimationFrame(raf);signal.removeEventListener('abort',abort);
@@ -235,7 +254,8 @@ function prepareReading(slug,signal){
     if(preparedFrame===frame){preparedFrame=null;dialog.removeAttribute('data-preloading');dialog.removeAttribute('aria-hidden');dialog.inert=false;}
     reject(error);
    }else{
-    // The artwork has rendered; retain this same iframe so revealing it never reloads it.
+    readyFrames.set(slug,frame);
+    // Keep the rendered frame for subsequent opens; access is checked each time.
     try{frame.contentWindow.addEventListener('keydown',event=>{if(event.key==='Escape')dialog.close();});}catch{}
     resolve();
    }
@@ -263,7 +283,7 @@ function prepareReading(slug,signal){
 }
 document.querySelectorAll('[data-read]').forEach(b=>b.addEventListener('click',()=>requestReading(b.dataset.read)));
 document.querySelector('#close-reading').addEventListener('click',()=>dialog.close());
-dialog.addEventListener('close',()=>{dialog.querySelector('iframe')?.remove();preparedFrame=null;returnFocus?.focus();});
+dialog.addEventListener('close',()=>{for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;preparedFrame=null;returnFocus?.focus();});
 document.querySelector('#reset-view').addEventListener('click',home);
 document.querySelector('#loading').hidden=true;
 let last=0;

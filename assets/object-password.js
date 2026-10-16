@@ -9,7 +9,6 @@ export function createObjectPasswordPrompt({prepare=async()=>{}}={}){
  #object-password input{box-sizing:border-box;display:block;width:100%;height:30px;border:1px solid #000;border-radius:0;background:transparent;color:inherit;font:inherit;text-align:center;padding:0 8px;appearance:none}
  #object-password input::placeholder{color:#111;opacity:1}
  #object-password input:focus{outline:none}
- #object-password form[aria-busy="true"] #object-password-status{opacity:0}
  #object-password-status{position:absolute;top:100%;left:0;right:0;font:inherit;line-height:1.6;margin:16px 0 0;color:#777;text-align:center}
  `;
  document.head.append(style);

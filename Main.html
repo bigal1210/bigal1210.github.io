@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Alexander Atalla</title>
     <meta name="format-detection" content="telephone=no">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500&display=swap" rel="stylesheet">
@@ -67,6 +69,16 @@
         
         /* Additional mobile-specific fixes */
         @media (max-width: 768px) {
+            body { height: 100svh; }
+            .button-container {
+                margin-top: 48px;
+                gap: clamp(20px, 6vw, 32px);
+            }
+            button {
+                width: clamp(130px, 38vw, 150px);
+                height: 40px;
+                font-size: 12px;
+            }
             a, a:link, a:visited, a:active {
                 color: black !important;
             }

@@ -116,6 +116,10 @@ import {fetchEncryptedArtwork} from './encrypted-artwork.js?v=split-1';
                 } catch {
                     // Storage may be disabled; unlocking still works for this visit.
                 }
+                if (requestedObject === 'watermelon') {
+                    // Own touch gestures rather than handing vertical drags to Safari.
+                    html = html.replace('<head>', '<head><meta name="theme-color" content="#ffffff"><style>html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#fff}body{position:fixed;inset:0;width:100%}main,#scene{height:100%;height:100dvh}#scene canvas{touch-action:none}</style>');
+                }
                 if (new URL(location.href).searchParams.has('embedded')) {
                     html = html.replace('<head>', '<head><style>body>header,#object-nav,.hint{display:none!important}</style>');
                 }

@@ -6,7 +6,7 @@ const requestSource=source.slice(source.indexOf('async function requestReading('
 let release,checks=0,shows=0;
 const dialog={open:false,removeAttribute(){},showModal(){this.open=true;shows++;},inert:true};
 const status={textContent:'',hidden:true};
-const context=vm.createContext({dialog,opening:false,tooltip:{},document:{activeElement:{}},openingStatus:status,mount:{setAttribute(){},removeAttribute(){}},askPassword:()=>{checks++;return new Promise(resolve=>release=resolve);}});
+const context=vm.createContext({setReadingAppearance(){},dialog,opening:false,tooltip:{},document:{activeElement:{}},openingStatus:status,mount:{setAttribute(){},removeAttribute(){}},askPassword:()=>{checks++;return new Promise(resolve=>release=resolve);}});
 vm.runInContext(requestSource,context);
 const first=vm.runInContext("requestReading('watermelon')",context);
 assert.equal(status.hidden,false);

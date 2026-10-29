@@ -153,7 +153,7 @@ for(const side of [-1,1]){let pts=[];for(let i=0;i<=100;i++){const t=i/100*Math.
 const melon=object('watermelon','Watermelon',5.9,.95,8.7);melon.rotation.y=-.35;
 outlined(new THREE.SphereGeometry(1,48,32),melon,[0,0,0],[1.6,.94,1]);
 for(let k=0;k<10;k++){const pts=[];for(let i=1;i<90;i++){const t=i/90*Math.PI,a=k/10*Math.PI*2+Math.sin(t*11+k)*.018;pts.push([1.616*Math.cos(t),.956*Math.sin(t)*Math.cos(a),1.016*Math.sin(t)*Math.sin(a)]);}stroke(pts,melon,.9);}
-const cat=object('caterpillar','You misunderstand me',9.3,.4212,6.8);cat.rotation.y=.5;cat.scale.set(1,.78,.78);
+const cat=object('caterpillar','Caterpillar',9.3,.4212,6.8);cat.rotation.y=.5;cat.scale.set(1,.78,.78);
 for(let i=0;i<9;i++){const x=(i-4)*.48,y=Math.sin(i*.5)*.13,z=Math.sin(i*.4)*.32,r=.5+Math.sin(i/8*Math.PI)*.12;
  outlined(new THREE.SphereGeometry(r,24,18),cat,[x,y,z],[.94,1,1]);
  for(const side of [-1,1]){const foot=outlined(new THREE.SphereGeometry(.12,10,8),cat,[x,-.4,z+side*.38],[1,.7,1.6]);}
@@ -240,7 +240,7 @@ async function requestReading(slug){
  }
 }
 function prepareReading(slug,signal){
- const labels={watermelon:'Watermelon',baseball:'Baseball',caterpillar:'You misunderstand me'};
+ const labels={watermelon:'Watermelon',baseball:'Baseball',caterpillar:'Caterpillar'};
  for(const frame of dialog.querySelectorAll('iframe'))frame.hidden=true;
  let cached=readyFrames.get(slug);
  // A reader may navigate inside a retained frame. Do not reuse it as the old object.

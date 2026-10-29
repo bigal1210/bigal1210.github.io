@@ -4,7 +4,7 @@ if(params.has('object')||params.get('preview')==='baseball-writing'){
  url.search=location.search;
  location.replace(url.href);
 }else{
- import('./stonehenge.js?v=white-watermelon-2').catch(error=>{
+ import('./stonehenge.js?v=caterpillar-placement-1').catch(error=>{
   document.querySelector('#loading').hidden=true;
   document.querySelector('#fallback').hidden=false;
   document.querySelector('.hint').hidden=true;
